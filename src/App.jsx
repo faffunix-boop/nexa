@@ -34,7 +34,8 @@ function App() {
 
     try {
       // URL telah diganti ke backend Render Anda
-      const res = await fetch("https://fusionai-2550.surge.sh//chat", {
+      const res = await fetch("https://fusionai-1.onrender.com/chat", {
+
         method: "POST",
         headers: {
           "Content-Type": "application/json",
