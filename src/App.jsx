@@ -1,140 +1,143 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import "./App.css";
 
-export default function App(){
+function App() {
+  const [msg, setMsg] = useState("");
+  const [chat, setChat] = useState([]);
+  const [load, setLoad] = useState(false);
 
-  const [input,setInput] = useState("");
-  const [messages,setMessages] = useState([]);
+  const messagesEndRef = useRef(null);
 
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
 
-  async function send(){
+  useEffect(() => {
+    scrollToBottom();
+  }, [chat, load]); 
 
-    if(!input.trim()) return;
+  async function send() {
+    if (!msg.trim()) return;
 
-    const question = input;
+    let text = msg;
 
-
-    setMessages(prev=>[
+    setChat((prev) => [
       ...prev,
       {
-        role:"user",
-        text:question
+        type: "user",
+        text: text,
       },
-      {
-        role:"ai",
-        text:"Thinking..."
-      }
     ]);
 
+    setMsg("");
+    setLoad(true);
 
-    setInput("");
-
-
-    try{
-
-      const res = await fetch(
-        "http://localhost:3000/chat",
-        {
-          method:"POST",
-          headers:{
-            "Content-Type":"application/json"
-          },
-          body:JSON.stringify({
-            question:question
-          })
-        }
-      );
-
+    try {
+      // URL telah diganti ke backend Render Anda
+      const res = await fetch("https://fusionai-1.onrender.com/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          message: text,
+        }),
+      });
 
       const data = await res.json();
 
-
-      setMessages(prev=>[
-        ...prev.slice(0,-1),
+      setChat((prev) => [
+        ...prev,
         {
-          role:"ai",
-          text:data.answer
-        }
+          type: "ai",
+          text: data.reply,
+        },
       ]);
-
-
-    }catch(e){
-
-      setMessages(prev=>[
-        ...prev.slice(0,-1),
+    } catch (error) {
+      console.error("Gagal menghubungi server:", error);
+      setChat((prev) => [
+        ...prev,
         {
-          role:"ai",
-          text:"Server error"
-        }
+          type: "ai",
+          text: "Maaf, terjadi kesalahan saat menghubungi server. Pastikan backend di Render sudah aktif.",
+        },
       ]);
-
+    } finally {
+      setLoad(false);
     }
-
   }
 
-
-
-  return(
-
-    <div className="app">
-
-      <div className="chatBox">
-
-
-        <div className="header">
-
-          <div className="logo">
-            ✦
-          </div>
-
-
+  return (
+    <div className="chat-layout">
+      <aside className="sidebar">
+        <div className="sidebar-header">
+          <span className="logo-icon">⚡</span>
           <div>
-            <h2>FusionAI</h2>
-            <p>Multi AI Assistant</p>
+            <h1>FusionAI</h1>
           </div>
-
         </div>
+        <div className="sidebar-content">
+          <p className="subtitle">Gemini + Groq Intelligence</p>
+        </div>
+      </aside>
 
+      <main className="main-content">
+        <header className="mobile-header">
+          <span className="logo-icon">⚡</span>
+          <h1>FusionAI</h1>
+        </header>
 
-
-        <div className="messages">
-
-          {messages.map((m,i)=>(
-
-            <div
-            key={i}
-            className={m.role}
-            >
-              {m.text}
+        <div className="chat-area">
+          {chat.length === 0 && (
+            <div className="empty-state">
+              <h2>Halo! Saya FusionAI.</h2>
+              <p>Ada yang bisa saya bantu hari ini?</p>
             </div>
+          )}
 
+          {chat.map((c, i) => (
+            <div key={i} className={`message-wrapper ${c.type}`}>
+              <div className="message-bubble">{c.text}</div>
+            </div>
           ))}
 
+          {load && (
+            <div className="message-wrapper ai">
+              <div className="message-bubble loading">
+                AI sedang berfikir... 🤖
+              </div>
+            </div>
+          )}
+
+          <div ref={messagesEndRef} />
         </div>
 
-
-
-        <div className="inputBox">
-
-          <input
-          value={input}
-          onChange={(e)=>setInput(e.target.value)}
-          placeholder="Message FusionAI..."
-          />
-
-
-          <button onClick={send}>
-            ➤
-          </button>
-
-
+        <div className="input-container">
+          <div className="input-box">
+            <input
+              className="chat-input"
+              value={msg}
+              onChange={(e) => setMsg(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && send()}
+              placeholder="Tanya sesuatu..."
+              disabled={load}
+            />
+            <button 
+              className="send-button" 
+              onClick={send} 
+              disabled={!msg.trim() || load}
+            >
+              ➤
+            </button>
+          </div>
+          <div className="disclaimer">
+            FusionAI dapat membuat kesalahan. Harap periksa kembali informasi penting.
+          </div>
         </div>
-
-
-      </div>
-
+      </main>
     </div>
-
   );
-
 }
+
+export default App;
+
