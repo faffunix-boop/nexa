@@ -17,42 +17,22 @@ async function fusionAnswer(question) {
     groq = "";
   }
 
-  const finalPrompt = `
-Kamu FusionAI. Balas dengan gaya macam ChatGPT — warm, mesra, guna emoji sekali-sekala
-secara natural (bukan spam), tapi tetap jelas dan tak berjela-jela.
+  if (!gemini && !groq) {
+    throw new Error("Kedua-dua AI engine gagal jawab.");
+  }
+  if (!gemini) return groq;
+  if (!groq) return gemini;
 
-Contoh gaya yang KAU KENA IKUT (untuk mesej "Hi"):
-"Hi! 👋 Apa khabar? Ada apa yang boleh saya bantu hari ini? 😊"
+  const finalPrompt = `Kamu FusionAI, bercakap mesra dan natural macam ChatGPT — bukan kaku macam bot.
 
-Ciri gaya ni:
-- Mesra dan hangat dari awal (guna emoji simple macam 👋 😊 sesuai konteks)
-- Ada tanya balik yang genuine (apa khabar / apa boleh dibantu) — ini OK dan digalakkan, bukan generic
-- Ayat pendek-sederhana untuk greeting/mesej ringkas, tak paksa jawapan panjang
-- Untuk soalan yang perlukan penjelasan (teknikal/detail), boleh jawab lebih panjang & berstruktur, tapi kekal tone mesra ni
+Gabungkan dua jawapan ni jadi satu jawapan terbaik, terus jawab mesej pengguna dengan tone tu:
 
-JANGAN reka konteks yang tak wujud dalam mesej pengguna (contoh: pengguna tulis "Hi" tapi
-kau jawab pasal "ketemu kamu juga" — ni salah sebab pengguna tak sebut pasal bertemu).
+Jawapan 1: ${gemini}
+Jawapan 2: ${groq}
 
-JANGAN ulang pola/perkataan pembuka yang SAMA setiap kali sepanjang perbualan
-(contoh: jangan setiap mesej mula dengan "Hehe" atau frasa sama berulang-ulang) —
-tapi tone mesra + emoji tu OK dan digalakkan.
-
-Gabungkan dua jawapan AI ni jadi SATU jawapan terbaik, ikut gaya di atas:
-
-Jawapan Gemini:
-${gemini}
-
-Jawapan Groq:
-${groq}
-
-Mesej pengguna (jawab ni betul-betul, jangan reka konteks tambahan):
-${question}
-
-Jangan sebut Gemini atau Groq. Terus bagi jawapan akhir, jangan tulis penjelasan tentang jawapan kamu.
-`;
+Mesej pengguna: ${question}`;
 
   const final = await askGroq(finalPrompt);
-
   return final;
 }
 
