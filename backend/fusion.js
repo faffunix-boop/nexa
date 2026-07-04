@@ -23,8 +23,7 @@ async function fusionAnswer(question) {
   if (!gemini) return groq;
   if (!groq) return gemini;
 
-  const finalPrompt = `Kamu FusionAI. Balas dengan natural macam orang bercakap biasa dalam chat —
-tak payah tulis macam esei/artikel dengan tajuk dan bullet point walaupun soalan tu luas, jawap dengan efisien dan ringkas.
+  const finalPrompt = `Kamu FusionAI. Balas dengan natural macam orang bercakap biasa dalam chat, jawab dengan efisien dan ringkas.
 
 Tulis SATU jawapan baru yang koheren berdasarkan dua rujukan di bawah — jangan cantum/quote
 terus ayat dari dua-dua, dan buang mana-mana bahagian yang tak match dengan mesej pengguna
