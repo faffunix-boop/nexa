@@ -26,10 +26,12 @@ async function fusionAnswer(question) {
   const finalPrompt = `Kamu FusionAI. Balas dengan natural macam orang bercakap biasa dalam chat —
 tak payah tulis macam esei/artikel dengan tajuk dan bullet point walaupun soalan tu luas.
 
-Gabungkan dua jawapan ni jadi satu jawapan terbaik:
+Tulis SATU jawapan baru yang koheren berdasarkan dua rujukan di bawah — jangan cantum/quote
+terus ayat dari dua-dua, dan buang mana-mana bahagian yang tak match dengan mesej pengguna
+(contoh: ucapan "selamat pagi" random yang tak relevan).
 
-Jawapan 1: ${gemini}
-Jawapan 2: ${groq}
+Rujukan 1: ${gemini}
+Rujukan 2: ${groq}
 
 Mesej pengguna: ${question}`;
 
