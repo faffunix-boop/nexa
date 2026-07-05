@@ -2,7 +2,7 @@ const askGroq = require("./groq");
 
 async function askCoding(question, history = []) {
   return askGroq(question, {
-    model: "qwen-2.5-coder-32b",
+    model: "openai/gpt-oss-120b",
     history,
     system: "Kamu pakar coding. Bagi jawapan tepat, code yang betul, dan penjelasan ringkas.",
   });
