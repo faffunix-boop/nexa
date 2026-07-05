@@ -1,13 +1,12 @@
 const askGroq = require("./groq");
 
 async function classifyTask(question) {
-  const prompt = `Klasifikasikan mesej ni ke SATU kategori sahaja: code, websearch, atau general.
+  const prompt = `Klasifikasikan mesej ni ke SATU kategori sahaja: code atau general.
 
-code = soalan pasal programming, code, debug, error, function, script.
-websearch = perlukan maklumat terkini/semasa (berita, harga, cuaca, siapa juara, apa yang baru berlaku, "sekarang", "terkini").
-general = semua yang lain (sembang biasa, nasihat, pengetahuan umum yang tak berubah, sejarah, konsep).
+code = soalan pasal programming, code, debug, error, function, script, syntax.
+general = semua yang lain (sembang biasa, nasihat, pengetahuan umum, sejarah, konsep).
 
-Jawab dengan SATU perkataan sahaja: code, websearch, atau general.
+Jawab dengan SATU perkataan sahaja: code atau general.
 
 Mesej: ${question}`;
 
@@ -15,7 +14,6 @@ Mesej: ${question}`;
     const result = await askGroq(prompt, { model: "openai/gpt-oss-20b" });
     const clean = result.trim().toLowerCase();
     if (clean.includes("code")) return "code";
-    if (clean.includes("websearch") || clean.includes("web search") || clean.includes("web_search")) return "websearch";
     return "general";
   } catch (e) {
     return "general";
