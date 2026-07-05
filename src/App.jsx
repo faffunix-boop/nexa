@@ -166,12 +166,12 @@ function App() {
                             borderRadius: "0 0 10px 10px",
                             fontSize: "12.5px",
                             whiteSpace: "pre-wrap",
-                            overflowWrap: "break-word",
+                            overflowWrap: "anywhere",
                           }}
                           codeTagProps={{
                             style: {
                               whiteSpace: "pre-wrap",
-                              overflowWrap: "break-word",
+                              overflowWrap: "anywhere",
                             },
                           }}
                         >
@@ -246,10 +246,10 @@ function App() {
                   margin: 0,
                   fontSize: "13px",
                   whiteSpace: "pre-wrap",
-                  overflowWrap: "break-word",
+                  overflowWrap: "anywhere",
                 }}
                 codeTagProps={{
-                  style: { whiteSpace: "pre-wrap", overflowWrap: "break-word" },
+                  style: { whiteSpace: "pre-wrap", overflowWrap: "anywhere" },
                 }}
               >
                 {expandedCode.content}
