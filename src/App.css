@@ -189,7 +189,8 @@ body {
 .code-block-wrapper {
   margin: 8px 0;
   border-radius: 10px;
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: visible;
   border: 1px solid var(--line);
   max-width: 100%;
 }
