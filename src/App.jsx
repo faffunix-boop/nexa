@@ -139,14 +139,12 @@ function App() {
                       <SyntaxHighlighter
                         language={seg.lang}
                         style={oneDark}
+                        wrapLongLines={true}
                         customStyle={{
                           margin: 0,
                           borderRadius: "0 0 10px 10px",
                           fontSize: "12.5px",
-                          maxHeight: "none",
-                          overflow: "visible",
                         }}
-                        wrapLongLines={false}
                       >
                         {seg.content}
                       </SyntaxHighlighter>
