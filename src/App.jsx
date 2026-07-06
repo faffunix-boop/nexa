@@ -44,7 +44,7 @@ function App() {
     setError(null);
 
     try {
-      const res = await fetch("https://fusionai-3.onrender.com/chat", {
+      const res = await fetch("https://nexa-2fnl.onrender.com/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ question: text, history: historyForRequest }),
