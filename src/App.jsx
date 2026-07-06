@@ -110,8 +110,8 @@ function App() {
           <span className="mark-coral" />
         </div>
         <div>
-          <h1>FusionAI</h1>
-          <p>Gemini Intelligence</p>
+          <h1>OrionAI</h1>
+          <p>multi ai</p>
         </div>
       </div>
 
