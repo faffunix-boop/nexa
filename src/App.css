@@ -141,7 +141,7 @@ body {
   display: flex;
   align-items: flex-end;
   gap: 10px;
-  max-width: 680px;
+  max-width: 95%;
   margin: 10px 0;
   animation: rise 0.3s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
@@ -196,7 +196,8 @@ body {
 .code-block-body {
   position: relative;
   max-height: 320px;
-  overflow: hidden;
+  overflow-y: hidden;
+  overflow-x: auto;
 }
 .code-fade {
   position: absolute;
