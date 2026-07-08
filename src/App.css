@@ -141,8 +141,9 @@ body {
   display: flex;
   align-items: flex-end;
   gap: 10px;
-  max-width: 100%;
-  margin: 10px 0;
+  max-width: 800px;
+  margin: 10px auto;
+  width: 100%;
   animation: rise 0.3s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 @keyframes rise {
@@ -179,9 +180,66 @@ body {
   color: var(--text);
   font-size: 14.5px;
   line-height: 1.6;
-  white-space: pre-wrap;
   overflow-wrap: break-word;
   word-break: break-word;
+}
+
+.ai p {
+  margin: 0 0 1rem;
+}
+.ai p:last-child {
+  margin-bottom: 0;
+}
+
+.ai h1, .ai h2, .ai h3, .ai h4 {
+  margin: 1.5rem 0 0.75rem;
+  font-family: "Space Grotesk", sans-serif;
+  color: var(--cyan);
+}
+.ai h1 { font-size: 1.6rem; }
+.ai h2 { font-size: 1.4rem; }
+.ai h3 { font-size: 1.2rem; }
+
+.ai ul, .ai ol {
+  margin: 0 0 1rem 1.5rem;
+  padding: 0;
+}
+.ai li {
+  margin-bottom: 0.5rem;
+}
+
+.ai blockquote {
+  margin: 1rem 0;
+  padding: 0.5rem 1rem;
+  border-left: 3px solid var(--cyan-dim);
+  background: rgba(70, 217, 224, 0.05);
+  font-style: italic;
+  color: var(--muted);
+}
+
+.ai table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1rem 0;
+  font-size: 13.5px;
+}
+.ai th, .ai td {
+  border: 1px solid var(--line);
+  padding: 8px 12px;
+  text-align: left;
+}
+.ai th {
+  background: rgba(130, 160, 180, 0.1);
+  color: var(--cyan);
+}
+
+.ai code:not(pre code) {
+  background: rgba(231, 234, 240, 0.1);
+  padding: 2px 5px;
+  border-radius: 4px;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.9em;
+  color: var(--coral);
 }
 
 .code-block-wrapper {
@@ -265,20 +323,24 @@ body {
   display: flex;
   align-items: center;
   padding: 18px 28px 24px;
-  gap: 10px;
+  gap: 12px;
+  max-width: 800px;
+  margin: 0 auto;
+  width: 100%;
 }
 
 input {
   flex: 1;
-  padding: 15px 18px;
-  border-radius: 30px;
+  padding: 14px 22px;
+  border-radius: 16px;
   border: 1px solid var(--line);
-  background: var(--panel);
+  background: var(--panel-2);
   color: var(--text);
-  font-size: 14.5px;
+  font-size: 15px;
   font-family: "Inter", sans-serif;
   outline: none;
-  transition: border-color 0.2s ease;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 input:focus {
   border-color: var(--cyan-dim);

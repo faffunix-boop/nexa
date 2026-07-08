@@ -1,4 +1,6 @@
 import { useState, useRef, useEffect } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { oneDark } from "react-syntax-highlighter/dist/esm/styles/prism";
 import "./App.css";
@@ -64,24 +66,6 @@ function App() {
     }
   }
 
-  function parseMessage(text) {
-    const regex = /```(\w*)\n?([\s\S]*?)```/g;
-    const segments = [];
-    let lastIndex = 0;
-    let match;
-    while ((match = regex.exec(text)) !== null) {
-      if (match.index > lastIndex) {
-        segments.push({ type: "text", content: text.slice(lastIndex, match.index) });
-      }
-      segments.push({ type: "code", lang: match[1] || "text", content: match[2] });
-      lastIndex = match.index + match[0].length;
-    }
-    if (lastIndex < text.length) {
-      segments.push({ type: "text", content: text.slice(lastIndex) });
-    }
-    return segments;
-  }
-
   function copyCode(content, key) {
     navigator.clipboard.writeText(content).then(() => {
       setCopiedIdx(key);
@@ -116,71 +100,79 @@ function App() {
         {chat.map((c, i) => (
           <div key={i} className={`row row-${c.type}`}>
             <div className={c.type}>
-              {c.text &&
-                parseMessage(c.text).map((seg, idx) => {
-                  const key = `${i}-${idx}`;
-                  return seg.type === "code" ? (
-                    <div key={key} className="code-block-wrapper">
-                      <div className="code-block-header">
-                        <span className="code-lang">{seg.lang}</span>
-                        <button
-                          className="copy-btn"
-                          onClick={() => copyCode(seg.content, key)}
-                        >
-                          {copiedIdx === key ? (
-                            "Disalin!"
-                          ) : (
-                            <>
-                              <svg
-                                stroke="currentColor"
-                                fill="none"
-                                strokeWidth="2"
-                                viewBox="0 0 24 24"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                height="1em"
-                                width="1em"
-                                xmlns="http://www.w3.org/2000/svg"
-                              >
-                                <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
-                                <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
-                              </svg>
-                              <span>Salin</span>
-                            </>
-                          )}
-                        </button>
-                      </div>
-                      <div className="code-block-body">
-                        <SyntaxHighlighter
-                          language={seg.lang}
-                          style={oneDark}
-                          customStyle={{
-                            margin: 0,
-                            padding: "1rem",
-                            background: "#0d0d0d",
-                            fontSize: "12.5px",
-                            whiteSpace: "pre-wrap",
-                            overflowWrap: "break-word",
-                          }}
-                          codeTagProps={{
-                            style: {
+              <ReactMarkdown
+                remarkPlugins={[remarkGfm]}
+                components={{
+                  code({ node, inline, className, children, ...props }) {
+                    const match = /language-(\w+)/.exec(className || "");
+                    const lang = match ? match[1] : "";
+                    const content = String(children).replace(/\n$/, "");
+                    const key = `code-${i}-${node.position.start.offset}`;
+
+                    return !inline && match ? (
+                      <div className="code-block-wrapper">
+                        <div className="code-block-header">
+                          <span className="code-lang">{lang}</span>
+                          <button
+                            className="copy-btn"
+                            onClick={() => copyCode(content, key)}
+                          >
+                            {copiedIdx === key ? (
+                              "Disalin!"
+                            ) : (
+                              <>
+                                <svg
+                                  stroke="currentColor"
+                                  fill="none"
+                                  strokeWidth="2"
+                                  viewBox="0 0 24 24"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  height="1em"
+                                  width="1em"
+                                  xmlns="http://www.w3.org/2000/svg"
+                                >
+                                  <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+                                  <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
+                                </svg>
+                                <span>Salin</span>
+                              </>
+                            )}
+                          </button>
+                        </div>
+                        <div className="code-block-body">
+                          <SyntaxHighlighter
+                            language={lang}
+                            style={oneDark}
+                            customStyle={{
+                              margin: 0,
+                              padding: "1rem",
+                              background: "#0d0d0d",
+                              fontSize: "12.5px",
                               whiteSpace: "pre-wrap",
                               overflowWrap: "break-word",
-                            },
-                          }}
-                        >
-                          {seg.content}
-                        </SyntaxHighlighter>
+                            }}
+                            codeTagProps={{
+                              style: {
+                                whiteSpace: "pre-wrap",
+                                overflowWrap: "break-word",
+                              },
+                            }}
+                          >
+                            {content}
+                          </SyntaxHighlighter>
+                        </div>
                       </div>
-                    </div>
-                  ) : (
-                    seg.content.trim() && (
-                      <p key={key} className="msg-text">
-                        {seg.content}
-                      </p>
-                    )
-                  );
-                })}
+                    ) : (
+                      <code className={className} {...props}>
+                        {children}
+                      </code>
+                    );
+                  },
+                }}
+              >
+                {c.text}
+              </ReactMarkdown>
             </div>
           </div>
         ))}
