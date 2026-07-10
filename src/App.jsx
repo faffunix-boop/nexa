@@ -1,16 +1,134 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, memo } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { oneDark } from "react-syntax-highlighter/dist/esm/styles/prism";
 import "./App.css";
 
+const CodeBlock = memo(({ lang, content }) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [isCopied, setIsCopied] = useState(false);
+  const codeRef = useRef(null);
+  const [shouldShowExpand, setShouldShowExpand] = useState(false);
+
+  useEffect(() => {
+    if (codeRef.current) {
+      const height = codeRef.current.scrollHeight;
+      if (height > 300) {
+        setShouldShowExpand(true);
+      } else {
+        setShouldShowExpand(false);
+        setIsExpanded(false);
+      }
+    }
+  }, [content]);
+
+  function copyCode() {
+    navigator.clipboard.writeText(content).then(() => {
+      setIsCopied(true);
+      setTimeout(() => setIsCopied(null), 1500);
+    });
+  }
+
+  const isCollapsed = shouldShowExpand && !isExpanded;
+
+  return (
+    <div className={`code-block-wrapper ${isCollapsed ? "collapsed" : ""}`}>
+      <div className="code-block-header">
+        <span className="code-lang">{lang}</span>
+        <div className="code-actions">
+          <button
+            className="copy-btn"
+            onClick={copyCode}
+            title="Salin Kod"
+          >
+            {isCopied ? (
+              <>✓ Disalin!</>
+            ) : (
+              <>
+                <svg
+                  stroke="currentColor"
+                  fill="none"
+                  strokeWidth="2"
+                  viewBox="0 0 24 24"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  height="1em"
+                  width="1em"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+                  <rect
+                    x="8"
+                    y="2"
+                    width="8"
+                    height="4"
+                    rx="1"
+                    ry="1"
+                  ></rect>
+                </svg>
+                Salin
+              </>
+            )}
+          </button>
+          {shouldShowExpand && (
+            <button
+              className="expand-toggle-btn"
+              onClick={() => setIsExpanded(!isExpanded)}
+              title={isExpanded ? "Kecilkan" : "Besarkan"}
+            >
+              {isExpanded ? (
+                <svg stroke="currentColor" fill="none" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg"><polyline points="4 14 10 14 10 20"></polyline><polyline points="20 10 14 10 14 4"></polyline><line x1="14" y1="10" x2="21" y2="3"></line><line x1="3" y1="21" x2="10" y2="14"></line></svg>
+              ) : (
+                <svg stroke="currentColor" fill="none" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg"><polyline points="15 3 21 3 21 9"></polyline><polyline points="9 21 3 21 3 15"></polyline><line x1="21" y1="3" x2="14" y2="10"></line><line x1="3" y1="21" x2="10" y2="14"></line></svg>
+              )}
+            </button>
+          )}
+        </div>
+      </div>
+      <div
+        className="code-block-body"
+        ref={codeRef}
+        style={isCollapsed ? { maxHeight: '300px', overflow: 'hidden' } : {}}
+      >
+        <SyntaxHighlighter
+          language={lang}
+          style={oneDark}
+          PreTag="div"
+          codeTagProps={{
+            style: {
+              display: "block",
+              whiteSpace: "pre",
+              wordBreak: "normal",
+              overflowWrap: "normal",
+              fontStyle: "normal",
+            },
+          }}
+          customStyle={{
+            margin: 0,
+            padding: "16px",
+            fontSize: "13px",
+            lineHeight: "1.5",
+            backgroundColor: "#0d0d0d",
+          }}
+        >
+          {content}
+        </SyntaxHighlighter>
+        {isCollapsed && (
+          <div className="code-expand-overlay" onClick={() => setIsExpanded(true)}>
+            <button className="show-more-btn">Tunjuk lagi</button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+});
+
 function App() {
   const [msg, setMsg] = useState("");
   const [chat, setChat] = useState([]);
   const [load, setLoad] = useState(false);
   const [error, setError] = useState(null);
-  const [copiedIdx, setCopiedIdx] = useState(null);
   const chatEndRef = useRef(null);
 
   useEffect(() => {
@@ -66,13 +184,6 @@ function App() {
     }
   }
 
-  function copyCode(content, key) {
-    navigator.clipboard.writeText(content).then(() => {
-      setCopiedIdx(key);
-      setTimeout(() => setCopiedIdx(null), 1500);
-    });
-  }
-
   return (
     <div className="app">
       <div className="top">
@@ -100,13 +211,12 @@ function App() {
               <ReactMarkdown
                 remarkPlugins={[remarkGfm]}
                 components={{
-                  code({ node, inline, className, children, ...props }) {
+                  code({ node, className, children, ...props }) {
                     const match = /language-(\w+)/.exec(className || "");
-                    const lang = match ? match[1] : "text";
                     const content = String(children).replace(/\n$/, "");
-                    const key = `code-${i}-${node.position?.start.offset || i}`;
 
-                    if (inline) {
+                    // If no language match and no newline in content, assume it's inline
+                    if (!match && !content.includes('\n')) {
                       return (
                         <code className="inline-code" {...props}>
                           {children}
@@ -114,71 +224,7 @@ function App() {
                       );
                     }
 
-                    return (
-                      <div className="code-block-wrapper">
-                        <div className="code-block-header">
-                          <span className="code-lang">{lang}</span>
-                          <button
-                            className="copy-btn"
-                            onClick={() => copyCode(content, key)}
-                          >
-                            {copiedIdx === key ? (
-                              <>✓ Disalin!</>
-                            ) : (
-                              <>
-                                <svg
-                                  stroke="currentColor"
-                                  fill="none"
-                                  strokeWidth="2"
-                                  viewBox="0 0 24 24"
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  height="1em"
-                                  width="1em"
-                                  xmlns="http://www.w3.org/2000/svg"
-                                >
-                                  <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
-                                  <rect
-                                    x="8"
-                                    y="2"
-                                    width="8"
-                                    height="4"
-                                    rx="1"
-                                    ry="1"
-                                  ></rect>
-                                </svg>
-                                Salin
-                              </>
-                            )}
-                          </button>
-                        </div>
-                        <div className="code-block-body">
-                          <SyntaxHighlighter
-                            language={lang}
-                            style={oneDark}
-                            PreTag="div"
-                            codeTagProps={{
-                              style: {
-                                display: "block",
-                                whiteSpace: "pre",
-                                wordBreak: "normal",
-                                overflowWrap: "normal",
-                                fontStyle: "normal",
-                              },
-                            }}
-                            customStyle={{
-                              margin: 0,
-                              padding: "16px",
-                              fontSize: "13px",
-                              lineHeight: "1.5",
-                              backgroundColor: "transparent",
-                            }}
-                          >
-                            {content}
-                          </SyntaxHighlighter>
-                        </div>
-                      </div>
-                    );
+                    return <CodeBlock lang={match ? match[1] : "text"} content={content} />;
                   },
                 }}
               >
