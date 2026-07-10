@@ -29,7 +29,7 @@ body {
 /* ---------- App Layout ---------- */
 .app-container {
   display: flex;
-  height: 100vh;
+  height: 100dvh; /* Use dynamic viewport height */
   width: 100vw;
   background: var(--void);
 }
@@ -41,6 +41,7 @@ body {
   display: flex;
   flex-direction: column;
   padding: 20px;
+  padding-top: calc(20px + env(safe-area-inset-top));
   transition: transform 0.3s ease;
   z-index: 100;
 }
@@ -124,7 +125,11 @@ body {
   align-items: center;
   gap: 15px;
   padding: 18px 28px;
+  padding-top: calc(18px + env(safe-area-inset-top));
   border-bottom: 1px solid var(--line);
+  background: var(--void);
+  flex-shrink: 0;
+  z-index: 10;
 }
 
 .menu-toggle {
@@ -170,7 +175,7 @@ body {
   padding: 24px 16px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 16px;
 }
 
 .row {
@@ -199,14 +204,14 @@ body {
 
 .ai {
   width: 100%;
-  padding: 14px 18px;
-  border-radius: 12px;
-  background: rgba(130, 160, 180, 0.03);
+  padding: 20px;
+  border-radius: 16px;
+  background: var(--panel-2);
   border: 1px solid var(--line);
-  border-left: 4px solid var(--cyan-dim);
   color: var(--text);
-  font-size: 15px;
-  line-height: 1.65;
+  font-size: 15.5px;
+  line-height: 1.7;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 /* ---------- Nexa Loading Animation ---------- */
@@ -308,6 +313,7 @@ button {
     left: 0;
     top: 0;
     bottom: 0;
+    height: 100dvh;
     transform: translateX(-100%);
   }
   .sidebar-visible .sidebar {
@@ -332,10 +338,49 @@ button {
 }
 
 /* Markdowns */
-.ai p { margin: 0 0 1rem 0; }
+.ai p { margin: 0 0 1.2rem 0; }
 .ai p:last-child { margin-bottom: 0; }
-.ai ul, .ai ol { margin: 0 0 1rem 1.5rem; }
-.ai li { margin-bottom: 0.5em; }
+.ai ul, .ai ol { margin: 0.5rem 0 1.2rem 1.5rem; }
+.ai li { margin-bottom: 0.6em; }
+.ai h1, .ai h2, .ai h3, .ai h4 {
+  margin: 1.5rem 0 1rem;
+  font-family: "Space Grotesk", sans-serif;
+  color: var(--cyan);
+}
+.ai h1 { font-size: 1.5em; border-bottom: 1px solid var(--line); padding-bottom: 0.3em; }
+.ai h2 { font-size: 1.3em; }
+.ai h3 { font-size: 1.1em; }
+
+.ai table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 1rem 0;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+}
+
+.ai th, .ai td {
+  padding: 10px 14px;
+  border: 1px solid var(--line);
+  text-align: left;
+}
+
+.ai th {
+  background: rgba(70, 217, 224, 0.1);
+  color: var(--cyan);
+  font-weight: 600;
+}
+
+.ai blockquote {
+  border-left: 4px solid var(--cyan-dim);
+  background: rgba(70, 217, 224, 0.05);
+  margin: 1rem 0;
+  padding: 10px 20px;
+  border-radius: 0 8px 8px 0;
+  font-style: italic;
+  color: var(--muted);
+}
 .inline-code {
   background: rgba(70, 217, 224, 0.1);
   color: var(--cyan);
@@ -349,4 +394,24 @@ button {
   display: block !important;
   background: transparent !important;
   padding: 0 !important;
+}
+
+.empty-state {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 18px;
+  text-align: center;
+  padding: 40px;
+  gap: 20px;
+}
+
+.empty-state p {
+  max-width: 400px;
+  line-height: 1.6;
+  opacity: 0.8;
 }

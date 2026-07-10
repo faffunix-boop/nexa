@@ -1,185 +1,62 @@
-import { useState, useRef, useEffect, useLayoutEffect, memo } from "react";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
+import { useState, useRef, useEffect } from "react";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { oneDark } from "react-syntax-highlighter/dist/esm/styles/prism";
 import "./App.css";
 
-const CodeBlock = memo(({ lang, content }) => {
-  const [isCopied, setIsCopied] = useState(false);
-
-  function copyCode() {
-    navigator.clipboard.writeText(content).then(() => {
-      setIsCopied(true);
-      setTimeout(() => setIsCopied(false), 1500);
-    });
-  }
-
-  return (
-    <div className="code-block-wrapper">
-      <div className="code-block-header">
-        <span className="code-lang">{lang}</span>
-        <div className="code-actions">
-          <button className="copy-btn" onClick={copyCode} title="Salin Kod">
-            {isCopied ? (
-              <>✓ Disalin!</>
-            ) : (
-              <>
-                <svg
-                  stroke="currentColor"
-                  fill="none"
-                  strokeWidth="2"
-                  viewBox="0 0 24 24"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  height="1em"
-                  width="1em"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
-                  <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
-                </svg>
-                Salin
-              </>
-            )}
-          </button>
-        </div>
-      </div>
-      <div className="code-block-body">
-        <SyntaxHighlighter
-          language={lang}
-          style={oneDark}
-          PreTag="div"
-          wrapLongLines={true}
-          codeTagProps={{
-            style: {
-              display: "inline-block",
-              fontStyle: "normal",
-              wordBreak: "break-word",
-              whiteSpace: "pre-wrap",
-              background: "transparent",
-            },
-          }}
-          customStyle={{
-            margin: 0,
-            padding: "16px",
-            fontSize: "13px",
-            lineHeight: "1.5",
-            backgroundColor: "#0d0d0d",
-          }}
-        >
-          {content}
-        </SyntaxHighlighter>
-      </div>
-    </div>
-  );
-});
-
 function App() {
   const [msg, setMsg] = useState("");
   const [chat, setChat] = useState([]);
-  const [sessions, setSessions] = useState(() => {
-    const saved = localStorage.getItem("nexa_chat_sessions");
-    return saved ? JSON.parse(saved) : [];
-  });
-  const [currentSessionId, setCurrentSessionId] = useState(null);
   const [load, setLoad] = useState(false);
   const [error, setError] = useState(null);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [copiedIdx, setCopiedIdx] = useState(null);
+  const [truncatedMap, setTruncatedMap] = useState({});
+  const [expandedCode, setExpandedCode] = useState(null);
+  const codeRefs = useRef({});
   const chatEndRef = useRef(null);
-
-  useEffect(() => {
-    localStorage.setItem("nexa_chat_sessions", JSON.stringify(sessions));
-  }, [sessions]);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chat, load]);
 
-  function startNewChat() {
-    if (chat.length > 0) {
-      const newSession = {
-        id: Date.now(),
-        title: chat[0].text.substring(0, 30) + (chat[0].text.length > 30 ? "..." : ""),
-        messages: chat,
-        timestamp: new Date().toISOString(),
-      };
-
-      // Update history if current session exists, otherwise add new
-      if (currentSessionId) {
-        setSessions(prev => prev.map(s => s.id === currentSessionId ? newSession : s));
-      } else {
-        setSessions(prev => [newSession, ...prev]);
+  useEffect(() => {
+    const newTruncated = {};
+    Object.entries(codeRefs.current).forEach(([key, el]) => {
+      if (el && el.scrollHeight > el.clientHeight + 2) {
+        newTruncated[key] = true;
       }
-    }
-    setChat([]);
-    setCurrentSessionId(null);
-    setSidebarOpen(false);
-  }
-
-  function loadSession(s) {
-    // Save current if needed
-    if (chat.length > 0 && !currentSessionId) {
-       const newSession = {
-        id: Date.now(),
-        title: chat[0].text.substring(0, 30) + (chat[0].text.length > 30 ? "..." : ""),
-        messages: chat,
-        timestamp: new Date().toISOString(),
-      };
-      setSessions(prev => [newSession, ...prev]);
-    }
-
-    setChat(s.messages);
-    setCurrentSessionId(s.id);
-    setSidebarOpen(false);
-  }
+    });
+    setTruncatedMap(newTruncated);
+  }, [chat]);
 
   async function send() {
+    // Guard: kosong ATAU sedang loading -> tak boleh hantar (elak double-send)
     if (!msg.trim() || load) return;
 
     const text = msg;
-    const newMessages = [...chat, { type: "user", text }];
+    const historyForRequest = chat.map((m) => ({
+      role: m.type === "user" ? "user" : "assistant",
+      content: m.text,
+    }));
 
-    setChat(newMessages);
+    setChat((prev) => [...prev, { type: "user", text }]);
     setMsg("");
     setLoad(true);
     setError(null);
 
     try {
-      const historyForRequest = chat.map((m) => ({
-        role: m.type === "user" ? "user" : "assistant",
-        content: m.text,
-      }));
-
-      const res = await fetch("/chat", {
+      const res = await fetch("https://nexa-2fnl.onrender.com/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ question: text, history: historyForRequest }),
       });
 
-      if (!res.ok) throw new Error(`Server balas status ${res.status}`);
-      const data = await res.json();
-      const updatedMessages = [...newMessages, { type: "ai", text: data.answer }];
-
-      setChat(updatedMessages);
-
-      // Auto-save/update session in history
-      if (currentSessionId) {
-        setSessions(prev => prev.map(s =>
-          s.id === currentSessionId ? { ...s, messages: updatedMessages } : s
-        ));
-      } else {
-        // Create new session in history after first AI response
-        const newId = Date.now();
-        const newSession = {
-          id: newId,
-          title: text.substring(0, 30) + (text.length > 30 ? "..." : ""),
-          messages: updatedMessages,
-          timestamp: new Date().toISOString(),
-        };
-        setSessions(prev => [newSession, ...prev]);
-        setCurrentSessionId(newId);
+      if (!res.ok) {
+        throw new Error(`Server balas status ${res.status}`);
       }
+
+      const data = await res.json();
+
+      setChat((prev) => [...prev, { type: "ai", text: data.answer }]);
     } catch (err) {
       // Fix: sebelum ni kalau fetch gagal, loading akan stuck selama-lamanya
       setError("Gagal hubungi server. Cuba refresh — server mungkin baru 'bangun' dari sleep.");
@@ -200,47 +77,51 @@ function App() {
     }
   }
 
+  function parseMessage(text) {
+    const regex = /```(\w*)\n?([\s\S]*?)```/g;
+    const segments = [];
+    let lastIndex = 0;
+    let match;
+    while ((match = regex.exec(text)) !== null) {
+      if (match.index > lastIndex) {
+        segments.push({ type: "text", content: text.slice(lastIndex, match.index) });
+      }
+      segments.push({ type: "code", lang: match[1] || "text", content: match[2] });
+      lastIndex = match.index + match[0].length;
+    }
+    if (lastIndex < text.length) {
+      segments.push({ type: "text", content: text.slice(lastIndex) });
+    }
+    return segments;
+  }
+
+  function copyCode(content, key) {
+    navigator.clipboard.writeText(content).then(() => {
+      setCopiedIdx(key);
+      setTimeout(() => setCopiedIdx(null), 1500);
+    });
+  }
+
   return (
-    <div className={`app-container ${sidebarOpen ? "sidebar-visible" : ""}`}>
-      <aside className="sidebar">
-        <button className="new-chat-btn" onClick={startNewChat}>
-          <span>+</span> Chat Baru
-        </button>
-
-        <div className="history-section">
-          <h3>History</h3>
-          <div className="history-list">
-            {sessions.length === 0 && <p className="empty-history">Tiada sejarah chat</p>}
-            {sessions.map((s) => (
-              <div
-                key={s.id}
-                className={`history-item ${currentSessionId === s.id ? "active" : ""}`}
-                onClick={() => loadSession(s)}
-              >
-                <svg stroke="currentColor" fill="none" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
-                <span className="history-title">{s.title}</span>
-              </div>
-            ))}
-          </div>
+    <div className="app">
+      <div className="top">
+        <div className="mark">
+          <span className="mark-cyan" />
+          <span className="mark-coral" />
         </div>
-      </aside>
-
-      <div className="app">
-        <div className="top">
-          <button className="menu-toggle" onClick={() => setSidebarOpen(!sidebarOpen)}>
-            ☰
-          </button>
-          <div className="mark">
-            <span className="mark-core" />
-          </div>
-          <div>
-            <h1>Nexa AI</h1>
-          </div>
+        <div>
+          <h1>Nexa</h1>
+          <p>Auto Multi AI Agent</p>
         </div>
+      </div>
 
-        <div className="chat">
+      <div className="chat">
         {chat.length === 0 && !load && (
           <div className="empty-state">
+            <div className="empty-mark">
+              <span className="mark-cyan" />
+              <span className="mark-coral" />
+            </div>
             <p>Tanya apa sahaja. Saya sedia bantu.</p>
           </div>
         )}
@@ -248,41 +129,70 @@ function App() {
         {chat.map((c, i) => (
           <div key={i} className={`row row-${c.type}`}>
             <div className={c.type}>
-              <ReactMarkdown
-                remarkPlugins={[remarkGfm]}
-                components={{
-                  code({ node, className, children, ...props }) {
-                    const match = /language-(\w+)/.exec(className || "");
-                    const content = String(children).replace(/\n$/, "");
-
-                    // If no language match and no newline in content, assume it's inline
-                    if (!match && !content.includes('\n')) {
-                      return (
-                        <code className="inline-code" {...props}>
-                          {children}
-                        </code>
-                      );
-                    }
-
-                    return <CodeBlock lang={match ? match[1] : "text"} content={content} />;
-                  },
-                }}
-              >
-                {c.text}
-              </ReactMarkdown>
+              {c.text &&
+                parseMessage(c.text).map((seg, idx) => {
+                  const key = `${i}-${idx}`;
+                  return seg.type === "code" ? (
+                    <div key={key} className="code-block-wrapper">
+                      <div className="code-block-header">
+                        <span className="code-lang">{seg.lang}</span>
+                        <button
+                          className="copy-btn"
+                          onClick={() => copyCode(seg.content, key)}
+                        >
+                          {copiedIdx === key ? "Disalin!" : "Salin"}
+                        </button>
+                      </div>
+                      <div
+                        className="code-block-body"
+                        ref={(el) => (codeRefs.current[key] = el)}
+                        onClick={() =>
+                          truncatedMap[key] &&
+                          setExpandedCode({ lang: seg.lang, content: seg.content })
+                        }
+                        style={{ cursor: truncatedMap[key] ? "pointer" : "default" }}
+                      >
+                        <SyntaxHighlighter
+                          language={seg.lang}
+                          style={oneDark}
+                          customStyle={{
+                            margin: 0,
+                            borderRadius: "0 0 10px 10px",
+                            fontSize: "12.5px",
+                            whiteSpace: "pre-wrap",
+                            overflowWrap: "break-word",
+                          }}
+                          codeTagProps={{
+                            style: {
+                              whiteSpace: "pre-wrap",
+                              overflowWrap: "break-word",
+                            },
+                          }}
+                        >
+                          {seg.content}
+                        </SyntaxHighlighter>
+                        {truncatedMap[key] && (
+                          <div className="code-fade">Ketuk untuk lihat penuh</div>
+                        )}
+                      </div>
+                    </div>
+                  ) : (
+                    seg.content.trim() && (
+                      <p key={key} className="msg-text">
+                        {seg.content}
+                      </p>
+                    )
+                  );
+                })}
             </div>
           </div>
         ))}
 
         {load && (
           <div className="row row-ai">
-            <div className="ai nexa-loading">
-              <div className="nexa-loader">
-                <div className="nexa-blob"></div>
-                <div className="nexa-blob"></div>
-                <div className="nexa-blob"></div>
-              </div>
-              <span className="loading-text">Nexa sedang berfikir...</span>
+            <div className="ai typing">
+              <span className="typing-label">AI sedang berfikir</span>
+              <span className="core" />
             </div>
           </div>
         )}
@@ -305,7 +215,39 @@ function App() {
         </button>
       </div>
 
-      </div>
+      {expandedCode && (
+        <div className="code-modal-overlay" onClick={() => setExpandedCode(null)}>
+          <div className="code-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="code-modal-header">
+              <span className="code-lang">{expandedCode.lang}</span>
+              <button
+                className="code-modal-close"
+                onClick={() => setExpandedCode(null)}
+                aria-label="Tutup"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="code-modal-body">
+              <SyntaxHighlighter
+                language={expandedCode.lang}
+                style={oneDark}
+                customStyle={{
+                  margin: 0,
+                  fontSize: "13px",
+                  whiteSpace: "pre-wrap",
+                  overflowWrap: "break-word",
+                }}
+                codeTagProps={{
+                  style: { whiteSpace: "pre-wrap", overflowWrap: "break-word" },
+                }}
+              >
+                {expandedCode.content}
+              </SyntaxHighlighter>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
