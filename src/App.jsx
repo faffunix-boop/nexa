@@ -6,22 +6,7 @@ import { oneDark } from "react-syntax-highlighter/dist/esm/styles/prism";
 import "./App.css";
 
 const CodeBlock = memo(({ lang, content }) => {
-  const [isExpanded, setIsExpanded] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
-  const codeRef = useRef(null);
-  const [shouldShowExpand, setShouldShowExpand] = useState(false);
-
-  useLayoutEffect(() => {
-    if (codeRef.current) {
-      const height = codeRef.current.scrollHeight;
-      if (height > 300) {
-        setShouldShowExpand(true);
-      } else {
-        setShouldShowExpand(false);
-        setIsExpanded(false);
-      }
-    }
-  }, [content]);
 
   function copyCode() {
     navigator.clipboard.writeText(content).then(() => {
@@ -30,18 +15,12 @@ const CodeBlock = memo(({ lang, content }) => {
     });
   }
 
-  const isCollapsed = shouldShowExpand && !isExpanded;
-
   return (
-    <div className={`code-block-wrapper ${isCollapsed ? "collapsed" : ""}`}>
+    <div className="code-block-wrapper">
       <div className="code-block-header">
         <span className="code-lang">{lang}</span>
         <div className="code-actions">
-          <button
-            className="copy-btn"
-            onClick={copyCode}
-            title="Salin Kod"
-          >
+          <button className="copy-btn" onClick={copyCode} title="Salin Kod">
             {isCopied ? (
               <>✓ Disalin!</>
             ) : (
@@ -58,39 +37,15 @@ const CodeBlock = memo(({ lang, content }) => {
                   xmlns="http://www.w3.org/2000/svg"
                 >
                   <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
-                  <rect
-                    x="8"
-                    y="2"
-                    width="8"
-                    height="4"
-                    rx="1"
-                    ry="1"
-                  ></rect>
+                  <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
                 </svg>
                 Salin
               </>
             )}
           </button>
-          {shouldShowExpand && (
-            <button
-              className="expand-toggle-btn"
-              onClick={() => setIsExpanded(!isExpanded)}
-              title={isExpanded ? "Kecilkan" : "Besarkan"}
-            >
-              {isExpanded ? (
-                <svg stroke="currentColor" fill="none" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg"><polyline points="4 14 10 14 10 20"></polyline><polyline points="20 10 14 10 14 4"></polyline><line x1="14" y1="10" x2="21" y2="3"></line><line x1="3" y1="21" x2="10" y2="14"></line></svg>
-              ) : (
-                <svg stroke="currentColor" fill="none" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg"><polyline points="15 3 21 3 21 9"></polyline><polyline points="9 21 3 21 3 15"></polyline><line x1="21" y1="3" x2="14" y2="10"></line><line x1="3" y1="21" x2="10" y2="14"></line></svg>
-              )}
-            </button>
-          )}
         </div>
       </div>
-      <div
-        className="code-block-body"
-        ref={codeRef}
-        style={isCollapsed ? { maxHeight: '300px', overflow: 'hidden' } : {}}
-      >
+      <div className="code-block-body">
         <SyntaxHighlighter
           language={lang}
           style={oneDark}
@@ -115,11 +70,6 @@ const CodeBlock = memo(({ lang, content }) => {
         >
           {content}
         </SyntaxHighlighter>
-        {isCollapsed && (
-          <div className="code-expand-overlay" onClick={() => setIsExpanded(true)}>
-            <button className="show-more-btn">Tunjuk lagi</button>
-          </div>
-        )}
       </div>
     </div>
   );
@@ -128,43 +78,108 @@ const CodeBlock = memo(({ lang, content }) => {
 function App() {
   const [msg, setMsg] = useState("");
   const [chat, setChat] = useState([]);
+  const [sessions, setSessions] = useState(() => {
+    const saved = localStorage.getItem("nexa_chat_sessions");
+    return saved ? JSON.parse(saved) : [];
+  });
+  const [currentSessionId, setCurrentSessionId] = useState(null);
   const [load, setLoad] = useState(false);
   const [error, setError] = useState(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const chatEndRef = useRef(null);
+
+  useEffect(() => {
+    localStorage.setItem("nexa_chat_sessions", JSON.stringify(sessions));
+  }, [sessions]);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chat, load]);
 
+  function startNewChat() {
+    if (chat.length > 0) {
+      const newSession = {
+        id: Date.now(),
+        title: chat[0].text.substring(0, 30) + (chat[0].text.length > 30 ? "..." : ""),
+        messages: chat,
+        timestamp: new Date().toISOString(),
+      };
+
+      // Update history if current session exists, otherwise add new
+      if (currentSessionId) {
+        setSessions(prev => prev.map(s => s.id === currentSessionId ? newSession : s));
+      } else {
+        setSessions(prev => [newSession, ...prev]);
+      }
+    }
+    setChat([]);
+    setCurrentSessionId(null);
+    setSidebarOpen(false);
+  }
+
+  function loadSession(s) {
+    // Save current if needed
+    if (chat.length > 0 && !currentSessionId) {
+       const newSession = {
+        id: Date.now(),
+        title: chat[0].text.substring(0, 30) + (chat[0].text.length > 30 ? "..." : ""),
+        messages: chat,
+        timestamp: new Date().toISOString(),
+      };
+      setSessions(prev => [newSession, ...prev]);
+    }
+
+    setChat(s.messages);
+    setCurrentSessionId(s.id);
+    setSidebarOpen(false);
+  }
+
   async function send() {
-    // Guard: kosong ATAU sedang loading -> tak boleh hantar (elak double-send)
     if (!msg.trim() || load) return;
 
     const text = msg;
-    const historyForRequest = chat.map((m) => ({
-      role: m.type === "user" ? "user" : "assistant",
-      content: m.text,
-    }));
+    const newMessages = [...chat, { type: "user", text }];
 
-    setChat((prev) => [...prev, { type: "user", text }]);
+    setChat(newMessages);
     setMsg("");
     setLoad(true);
     setError(null);
 
     try {
+      const historyForRequest = chat.map((m) => ({
+        role: m.type === "user" ? "user" : "assistant",
+        content: m.text,
+      }));
+
       const res = await fetch("/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ question: text, history: historyForRequest }),
       });
 
-      if (!res.ok) {
-        throw new Error(`Server balas status ${res.status}`);
-      }
-
+      if (!res.ok) throw new Error(`Server balas status ${res.status}`);
       const data = await res.json();
+      const updatedMessages = [...newMessages, { type: "ai", text: data.answer }];
 
-      setChat((prev) => [...prev, { type: "ai", text: data.answer }]);
+      setChat(updatedMessages);
+
+      // Auto-save/update session in history
+      if (currentSessionId) {
+        setSessions(prev => prev.map(s =>
+          s.id === currentSessionId ? { ...s, messages: updatedMessages } : s
+        ));
+      } else {
+        // Create new session in history after first AI response
+        const newId = Date.now();
+        const newSession = {
+          id: newId,
+          title: text.substring(0, 30) + (text.length > 30 ? "..." : ""),
+          messages: updatedMessages,
+          timestamp: new Date().toISOString(),
+        };
+        setSessions(prev => [newSession, ...prev]);
+        setCurrentSessionId(newId);
+      }
     } catch (err) {
       // Fix: sebelum ni kalau fetch gagal, loading akan stuck selama-lamanya
       setError("Gagal hubungi server. Cuba refresh — server mungkin baru 'bangun' dari sleep.");
@@ -186,17 +201,44 @@ function App() {
   }
 
   return (
-    <div className="app">
-      <div className="top">
-        <div className="mark">
-          <span className="mark-core" />
-        </div>
-        <div>
-          <h1>Nexa AI</h1>
-        </div>
-      </div>
+    <div className={`app-container ${sidebarOpen ? "sidebar-visible" : ""}`}>
+      <aside className="sidebar">
+        <button className="new-chat-btn" onClick={startNewChat}>
+          <span>+</span> Chat Baru
+        </button>
 
-      <div className="chat">
+        <div className="history-section">
+          <h3>History</h3>
+          <div className="history-list">
+            {sessions.length === 0 && <p className="empty-history">Tiada sejarah chat</p>}
+            {sessions.map((s) => (
+              <div
+                key={s.id}
+                className={`history-item ${currentSessionId === s.id ? "active" : ""}`}
+                onClick={() => loadSession(s)}
+              >
+                <svg stroke="currentColor" fill="none" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                <span className="history-title">{s.title}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </aside>
+
+      <div className="app">
+        <div className="top">
+          <button className="menu-toggle" onClick={() => setSidebarOpen(!sidebarOpen)}>
+            ☰
+          </button>
+          <div className="mark">
+            <span className="mark-core" />
+          </div>
+          <div>
+            <h1>Nexa AI</h1>
+          </div>
+        </div>
+
+        <div className="chat">
         {chat.length === 0 && !load && (
           <div className="empty-state">
             <div className="empty-mark">
@@ -237,9 +279,13 @@ function App() {
 
         {load && (
           <div className="row row-ai">
-            <div className="ai typing">
-              <span className="typing-label">AI sedang berfikir</span>
-              <span className="core" />
+            <div className="ai nexa-loading">
+              <div className="nexa-loader">
+                <div className="nexa-blob"></div>
+                <div className="nexa-blob"></div>
+                <div className="nexa-blob"></div>
+              </div>
+              <span className="loading-text">Nexa sedang berfikir...</span>
             </div>
           </div>
         )}
@@ -262,6 +308,7 @@ function App() {
         </button>
       </div>
 
+      </div>
     </div>
   );
 }
