@@ -95,13 +95,13 @@ const CodeBlock = memo(({ lang, content }) => {
           language={lang}
           style={oneDark}
           PreTag="div"
+          wrapLongLines={true}
           codeTagProps={{
             style: {
-              display: "block",
-              whiteSpace: "pre-wrap",
-              wordBreak: "break-word",
-              overflowWrap: "anywhere",
+              display: "block !important",
               fontStyle: "normal",
+              wordBreak: "break-all",
+              whiteSpace: "pre-wrap",
             },
           }}
           customStyle={{
