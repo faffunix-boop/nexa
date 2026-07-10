@@ -488,6 +488,16 @@ button:disabled {
   display: inline !important;
 }
 
+/* Override global code styles from index.css that cause layout issues in SyntaxHighlighter */
+.code-block-body code {
+  display: block !important;
+  background: transparent !important;
+  padding: 0 !important;
+  width: auto !important;
+  line-height: inherit !important;
+  font-size: inherit !important;
+}
+
 button:focus-visible,
 input:focus-visible {
   outline: 2px solid var(--cyan);

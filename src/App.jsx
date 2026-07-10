@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, memo } from "react";
+import { useState, useRef, useEffect, useLayoutEffect, memo } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
@@ -11,7 +11,7 @@ const CodeBlock = memo(({ lang, content }) => {
   const codeRef = useRef(null);
   const [shouldShowExpand, setShouldShowExpand] = useState(false);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (codeRef.current) {
       const height = codeRef.current.scrollHeight;
       if (height > 300) {
