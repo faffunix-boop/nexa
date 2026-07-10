@@ -1,35 +1,28 @@
 import { useState, useRef, useEffect } from "react";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { oneDark } from "react-syntax-highlighter/dist/esm/styles/prism";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import "./App.css";
 
 function App() {
   const [msg, setMsg] = useState("");
-  const [chat, setChat] = useState([]);
+  const [sessions, setSessions] = useState([{ id: 1, chat: [] }]);
+  const [activeSessionId, setActiveSessionId] = useState(1);
   const [load, setLoad] = useState(false);
   const [error, setError] = useState(null);
   const [copiedIdx, setCopiedIdx] = useState(null);
-  const [truncatedMap, setTruncatedMap] = useState({});
-  const [expandedCode, setExpandedCode] = useState(null);
-  const codeRefs = useRef({});
+  const [sidebarVisible, setSidebarVisible] = useState(false);
   const chatEndRef = useRef(null);
+
+  const activeSession = sessions.find(s => s.id === activeSessionId) || sessions[0];
+  const chat = activeSession.chat;
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chat, load]);
 
-  useEffect(() => {
-    const newTruncated = {};
-    Object.entries(codeRefs.current).forEach(([key, el]) => {
-      if (el && el.scrollHeight > el.clientHeight + 2) {
-        newTruncated[key] = true;
-      }
-    });
-    setTruncatedMap(newTruncated);
-  }, [chat]);
-
   async function send() {
-    // Guard: kosong ATAU sedang loading -> tak boleh hantar (elak double-send)
     if (!msg.trim() || load) return;
 
     const text = msg;
@@ -38,7 +31,12 @@ function App() {
       content: m.text,
     }));
 
-    setChat((prev) => [...prev, { type: "user", text }]);
+    const newUserMsg = { type: "user", text };
+
+    setSessions(prev => prev.map(s =>
+      s.id === activeSessionId ? { ...s, chat: [...s.chat, newUserMsg] } : s
+    ));
+
     setMsg("");
     setLoad(true);
     setError(null);
@@ -50,24 +48,28 @@ function App() {
         body: JSON.stringify({ question: text, history: historyForRequest }),
       });
 
-      if (!res.ok) {
-        throw new Error(`Server balas status ${res.status}`);
-      }
-
+      if (!res.ok) throw new Error(`Server balas status ${res.status}`);
       const data = await res.json();
 
-      setChat((prev) => [...prev, { type: "ai", text: data.answer }]);
+      setSessions(prev => prev.map(s =>
+        s.id === activeSessionId ? { ...s, chat: [...s.chat, { type: "ai", text: data.answer }] } : s
+      ));
     } catch (err) {
-      // Fix: sebelum ni kalau fetch gagal, loading akan stuck selama-lamanya
-      setError("Gagal hubungi server. Cuba refresh — server mungkin baru 'bangun' dari sleep.");
-      setChat((prev) => [
-        ...prev,
-        { type: "ai", text: "⚠️ Maaf, saya tak dapat balas sekarang. Sila cuba lagi." },
-      ]);
+      setError("Gagal hubungi server. Cuba refresh.");
+      setSessions(prev => prev.map(s =>
+        s.id === activeSessionId ? { ...s, chat: [...s.chat, { type: "ai", text: "⚠️ Maaf, saya tak dapat balas sekarang." }] } : s
+      ));
       console.error(err);
     } finally {
       setLoad(false);
     }
+  }
+
+  function createNewChat() {
+    const newId = Date.now();
+    setSessions(prev => [{ id: newId, chat: [] }, ...prev]);
+    setActiveSessionId(newId);
+    setSidebarVisible(false);
   }
 
   function handleKeyDown(e) {
@@ -77,24 +79,6 @@ function App() {
     }
   }
 
-  function parseMessage(text) {
-    const regex = /```(\w*)\n?([\s\S]*?)```/g;
-    const segments = [];
-    let lastIndex = 0;
-    let match;
-    while ((match = regex.exec(text)) !== null) {
-      if (match.index > lastIndex) {
-        segments.push({ type: "text", content: text.slice(lastIndex, match.index) });
-      }
-      segments.push({ type: "code", lang: match[1] || "text", content: match[2] });
-      lastIndex = match.index + match[0].length;
-    }
-    if (lastIndex < text.length) {
-      segments.push({ type: "text", content: text.slice(lastIndex) });
-    }
-    return segments;
-  }
-
   function copyCode(content, key) {
     navigator.clipboard.writeText(content).then(() => {
       setCopiedIdx(key);
@@ -102,152 +86,150 @@ function App() {
     });
   }
 
-  return (
-    <div className="app">
-      <div className="top">
-        <div className="mark">
-          <span className="mark-cyan" />
-          <span className="mark-coral" />
-        </div>
-        <div>
-          <h1>Nexa</h1>
-          <p>Auto Multi AI Agent</p>
-        </div>
-      </div>
+  const MarkdownComponents = {
+    code({ node, inline, className, children, ...props }) {
+      const match = /language-(\w+)/.exec(className || "");
+      const lang = match ? match[1] : "text";
+      const content = String(children).replace(/\n$/, "");
+      const key = node.position ? `${node.position.start.line}-${node.position.start.column}` : Math.random().toString();
 
-      <div className="chat">
-        {chat.length === 0 && !load && (
-          <div className="empty-state">
-            <div className="empty-mark">
-              <span className="mark-cyan" />
-              <span className="mark-coral" />
-            </div>
-            <p>Tanya apa sahaja. Saya sedia bantu.</p>
+      if (inline) {
+        return (
+          <code className="inline-code" {...props}>
+            {children}
+          </code>
+        );
+      }
+
+      return (
+        <div className="code-block-wrapper">
+          <div className="code-block-header">
+            <span className="code-lang">{lang}</span>
+            <button className="copy-btn" onClick={() => copyCode(content, key)}>
+              {copiedIdx === key ? "Disalin!" : "Salin"}
+            </button>
           </div>
-        )}
-
-        {chat.map((c, i) => (
-          <div key={i} className={`row row-${c.type}`}>
-            <div className={c.type}>
-              {c.text &&
-                parseMessage(c.text).map((seg, idx) => {
-                  const key = `${i}-${idx}`;
-                  return seg.type === "code" ? (
-                    <div key={key} className="code-block-wrapper">
-                      <div className="code-block-header">
-                        <span className="code-lang">{seg.lang}</span>
-                        <button
-                          className="copy-btn"
-                          onClick={() => copyCode(seg.content, key)}
-                        >
-                          {copiedIdx === key ? "Disalin!" : "Salin"}
-                        </button>
-                      </div>
-                      <div
-                        className="code-block-body"
-                        ref={(el) => (codeRefs.current[key] = el)}
-                        onClick={() =>
-                          truncatedMap[key] &&
-                          setExpandedCode({ lang: seg.lang, content: seg.content })
-                        }
-                        style={{ cursor: truncatedMap[key] ? "pointer" : "default" }}
-                      >
-                        <SyntaxHighlighter
-                          language={seg.lang}
-                          style={oneDark}
-                          customStyle={{
-                            margin: 0,
-                            borderRadius: "0 0 10px 10px",
-                            fontSize: "12.5px",
-                            whiteSpace: "pre-wrap",
-                            overflowWrap: "break-word",
-                          }}
-                          codeTagProps={{
-                            style: {
-                              whiteSpace: "pre-wrap",
-                              overflowWrap: "break-word",
-                            },
-                          }}
-                        >
-                          {seg.content}
-                        </SyntaxHighlighter>
-                        {truncatedMap[key] && (
-                          <div className="code-fade">Ketuk untuk lihat penuh</div>
-                        )}
-                      </div>
-                    </div>
-                  ) : (
-                    seg.content.trim() && (
-                      <p key={key} className="msg-text">
-                        {seg.content}
-                      </p>
-                    )
-                  );
-                })}
-            </div>
-          </div>
-        ))}
-
-        {load && (
-          <div className="row row-ai">
-            <div className="ai typing">
-              <span className="typing-label">AI sedang berfikir</span>
-              <span className="core" />
-            </div>
-          </div>
-        )}
-
-        <div ref={chatEndRef} />
-      </div>
-
-      {error && <div className="error-banner">{error}</div>}
-
-      <div className="inputBox">
-        <input
-          value={msg}
-          onChange={(e) => setMsg(e.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder="Tanya sesuatu..."
-          disabled={load}
-        />
-        <button onClick={send} disabled={load || !msg.trim()} aria-label="Hantar">
-          ➤
-        </button>
-      </div>
-
-      {expandedCode && (
-        <div className="code-modal-overlay" onClick={() => setExpandedCode(null)}>
-          <div className="code-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="code-modal-header">
-              <span className="code-lang">{expandedCode.lang}</span>
-              <button
-                className="code-modal-close"
-                onClick={() => setExpandedCode(null)}
-                aria-label="Tutup"
-              >
-                ✕
-              </button>
-            </div>
-            <div className="code-modal-body">
-              <SyntaxHighlighter
-                language={expandedCode.lang}
-                style={oneDark}
-                customStyle={{
-                  margin: 0,
-                  fontSize: "13px",
+          <div className="code-block-body">
+            <SyntaxHighlighter
+              language={lang}
+              style={oneDark}
+              customStyle={{
+                margin: 0,
+                borderRadius: "0 0 10px 10px",
+                padding: "15px",
+                fontSize: "12.5px",
+                whiteSpace: "pre-wrap",
+                overflowWrap: "break-word",
+              }}
+              codeTagProps={{
+                style: {
                   whiteSpace: "pre-wrap",
                   overflowWrap: "break-word",
-                }}
-                codeTagProps={{
-                  style: { whiteSpace: "pre-wrap", overflowWrap: "break-word" },
-                }}
-              >
-                {expandedCode.content}
-              </SyntaxHighlighter>
-            </div>
+                },
+              }}
+            >
+              {content}
+            </SyntaxHighlighter>
           </div>
         </div>
-      )}
+      );
+    },
+  };
+
+  return (
+    <div className={`app-container ${sidebarVisible ? "sidebar-visible" : ""}`}>
+      <aside className="sidebar">
+        <button className="new-chat-btn" onClick={createNewChat}>
+          <span>+</span> New Chat
+        </button>
+        <div className="history-section">
+          <h3>History</h3>
+          <div className="history-list">
+            {sessions.map(s => (
+              <div
+                key={s.id}
+                className={`history-item ${s.id === activeSessionId ? "active" : ""}`}
+                onClick={() => { setActiveSessionId(s.id); setSidebarVisible(false); }}
+              >
+                <div className="history-title">
+                  {s.chat.length > 0 ? s.chat[0].text : "Empty Chat"}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </aside>
+
+      <div className="app">
+        <header className="top">
+          <button className="menu-toggle" onClick={() => setSidebarVisible(!sidebarVisible)}>
+            ☰
+          </button>
+          <div className="mark">
+            <div className="mark-core" />
+          </div>
+          <div>
+            <h1>Nexa</h1>
+            <p>Auto Multi AI Agent</p>
+          </div>
+        </header>
+
+        <main className="chat">
+          {chat.length === 0 && !load && (
+            <div className="empty-state">
+              <div className="empty-mark">
+                <div className="mark-core" />
+              </div>
+              <p>Tanya apa sahaja. Saya sedia bantu.</p>
+            </div>
+          )}
+
+          {chat.map((c, i) => (
+            <div key={i} className={`row row-${c.type}`}>
+              <div className={c.type}>
+                {c.type === "ai" ? (
+                  <ReactMarkdown remarkPlugins={[remarkGfm]} components={MarkdownComponents}>
+                    {c.text}
+                  </ReactMarkdown>
+                ) : (
+                  <p className="msg-text">{c.text}</p>
+                )}
+              </div>
+            </div>
+          ))}
+
+          {load && (
+            <div className="row row-ai">
+              <div className="ai">
+                <div className="nexa-loading">
+                  <div className="nexa-loader">
+                    <div className="nexa-blob" />
+                    <div className="nexa-blob" />
+                    <div className="nexa-blob" />
+                  </div>
+                  <span className="loading-text">Nexa sedang berfikir...</span>
+                </div>
+              </div>
+            </div>
+          )}
+          <div ref={chatEndRef} />
+        </main>
+
+        {error && <div className="error-banner">{error}</div>}
+
+        <footer className="inputBox">
+          <input
+            value={msg}
+            onChange={(e) => setMsg(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="Tanya sesuatu..."
+            disabled={load}
+          />
+          <button className="send-btn" onClick={send} disabled={load || !msg.trim()} aria-label="Hantar">
+            ➤
+          </button>
+        </footer>
+      </div>
     </div>
   );
 }
