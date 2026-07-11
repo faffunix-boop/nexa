@@ -95,18 +95,24 @@ function App() {
             <SyntaxHighlighter
               language={lang}
               style={oneDark}
-              wrapLongLines={false}
+              wrapLongLines={true}
               customStyle={{
                 margin: 0,
-                borderRadius: "0 0 10px 10px",
-                padding: "15px",
-                fontSize: "12.5px",
-                whiteSpace: "pre",
-                overflowX: "auto",
+                borderRadius: "0",
+                padding: "12px 14px",
+                fontSize: "12px",
+                lineHeight: "1.5",
+                background: "transparent",
+                whiteSpace: "pre-wrap",
+                overflowWrap: "anywhere",
+                wordBreak: "break-word",
               }}
               codeTagProps={{
                 style: {
-                  whiteSpace: "pre",
+                  whiteSpace: "pre-wrap",
+                  overflowWrap: "anywhere",
+                  wordBreak: "break-word",
+                  fontFamily: '"JetBrains Mono", monospace',
                 },
               }}
             >
