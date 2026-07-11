@@ -2,7 +2,7 @@ const askOpenRouter = require("./openrouter");
 
 async function askCoding(question, history = []) {
   return askOpenRouter(question, {
-    model: "cohere/north-mini-code:free",
+    model: "tencent/hy3:free",
     history,
     system: "Kamu pakar coding. PENTING untuk ketepatan dan persembahan:\n" +
       "- WAJIB gunakan blok kod Markdown (triple backticks) dengan nama bahasa (contoh: ```html, ```javascript) untuk semua kod.\n" +
