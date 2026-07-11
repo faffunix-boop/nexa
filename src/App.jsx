@@ -42,7 +42,7 @@ function App() {
     setError(null);
 
     try {
-      const res = await fetch("https://nexa-2fnl.onrender.com/chat", {
+      const res = await fetch("/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ question: text, history: historyForRequest }),
@@ -87,13 +87,14 @@ function App() {
   }
 
   const MarkdownComponents = {
-    code({ node, inline, className, children, ...props }) {
+    code({ node, className, children, ...props }) {
       const match = /language-(\w+)/.exec(className || "");
+      const isInline = !match;
       const lang = match ? match[1] : "text";
       const content = String(children).replace(/\n$/, "");
-      const key = node.position ? `${node.position.start.line}-${node.position.start.column}` : Math.random().toString();
+      const key = node?.position ? `${node.position.start.line}-${node.position.start.column}` : Math.random().toString();
 
-      if (inline) {
+      if (isInline) {
         return (
           <code className="inline-code" {...props}>
             {children}
