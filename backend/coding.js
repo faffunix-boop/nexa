@@ -20,7 +20,7 @@ async function askCoding(question, history = []) {
     throw err;
   }
 
-  const reviewPrompt = `Semak code berikut dan buat code yang sudah di perbaiki.
+  const reviewPrompt = `cari bug di code berikut, jika ada bug, buat code baru yang sudah diperbaiki.
 
 Soalan:
 ${question}
