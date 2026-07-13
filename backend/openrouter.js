@@ -16,7 +16,7 @@ async function askOpenRouter(message, options = {}) {
   const response = await axios.post(
     "https://openrouter.ai/api/v1/chat/completions",
     {
-      model: model || "poolside/laguna-m.1:free",
+      model: model || "tencent/hy3:free",
       messages,
     },
     {
