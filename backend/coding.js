@@ -2,32 +2,39 @@ const askOpenRouter = require("./openrouter");
 const askGroq = require("./groq");
 
 async function askCoding(question, history = []) {
-  // Stage 1: Laguna generate draf code
-  const draft = await askOpenRouter(question, {
-    model: "poolside/laguna-m.1:free",
-    history,
-    system: "Kamu pakar coding. Tulis code dengan format kemas (indent betul, satu statement satu baris). " +
-      "Untuk soalan simple, bagi code paling ringkas. Jangan reka konsep yang pengguna tak minta.",
-  });
+  let draft;
 
-  // Stage 2: gpt-oss-120b semak & betulkan draf tu
-  const reviewPrompt = `Semak code di bawah ni dengan teliti untuk cari BUG (logic error, syntax salah,
-operator precedence tersilap, edge case terlepas). Kalau ada bug, BETULKAN terus dalam code.
-Kalau code dah betul, kembalikan macam asal.
+  try {
+    draft = await askOpenRouter(question, {
+      model: "poolside/laguna-m.1:free",
+      history,
+      system:
+        "Kamu pakar coding. Tulis code dengan format kemas (indent betul, satu statement satu baris). " +
+        "Untuk soalan simple, bagi code paling ringkas. Jangan reka konsep yang pengguna tak minta.",
+    });
 
-Balas dengan format SAMA macam draf asal (penjelasan + code block), jangan tambah komen
-"saya dah semak" atau sebagainya — terus bagi versi akhir yang dah disahkan betul.
+    if (!draft?.trim()) {
+      throw new Error("OpenRouter tidak mengembalikan jawapan.");
+    }
+  } catch (err) {
+    throw err;
+  }
 
-Soalan asal pengguna: ${question}
+  const reviewPrompt = `Semak code berikut dan betulkan jika ada bug.
 
-Draf code untuk disemak:
+Soalan:
+${question}
+
+Code:
 ${draft}`;
 
   try {
-    const reviewed = await askGroq(reviewPrompt, { model: "openai/gpt-oss-120b" });
-    return reviewed;
-  } catch (e) {
-    // Kalau reviewer gagal, fallback ke draf asal Laguna (jangan crash)
+    const reviewed = await askGroq(reviewPrompt, {
+      model: "openai/gpt-oss-120b",
+    });
+
+    return reviewed?.trim() ? reviewed : draft;
+  } catch {
     return draft;
   }
 }
