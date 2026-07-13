@@ -30,7 +30,7 @@ ${draft}`;
 
   try {
     const reviewed = await askGroq(reviewPrompt, {
-      model: "openai/gpt-oss-120b",
+      model: "qwen/qwen3-32b",
     });
 
     return reviewed?.trim() ? reviewed : draft;
