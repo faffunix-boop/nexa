@@ -6,7 +6,7 @@ async function askCoding(question, history = []) {
 
   try {
     draft = await askOpenRouter(question, {
-      model: "poolside/laguna-m.1:free",
+      model: "tencent/hy3:free",
       history,
       system:
         "Kamu pakar coding. Tulis code dengan format kemas (indent betul, satu statement satu baris). " +
