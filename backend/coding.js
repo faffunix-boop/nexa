@@ -2,36 +2,33 @@ const askOpenRouter = require("./openrouter");
 const askGroq = require("./groq");
 
 async function askCoding(question, history = []) {
+  let draft;
+
   try {
-    // AI 1: Buat code
-    const draft = await askOpenRouter(question, {
+    draft = await askOpenRouter(question, {
       model: "tencent/hy3:free",
       history,
     });
 
-    // AI 2: DeepSeek-R1 review & baiki
-    const reviewed = await askGroq(`
-Kamu adalah AI Code Reviewer.
+    const review = await askGroq(
+      `Kamu adalah code reviewer.
 
 Semak code ini:
-- Cari semua bug.
-- Baiki syntax error.
-- Baiki logic error.
-- Tingkatkan kualiti code jika perlu.
-- Pulangkan HANYA keseluruhan code yang sudah diperbaiki.
-- Jangan beri penjelasan.
-
-CODE:
 ${draft}
-`, {
-      model: "deepseek-r1-distill-qwen-32b",
-      history,
-    });
 
-    return reviewed;
+Jika ada bug, baiki.
+Pulangkan keseluruhan code yang sudah diperbaiki.
+Jangan beri penerangan.`,
+      {
+        model: "deepseek-r1-distill-qwen-32b",
+        history,
+      }
+    );
+
+    return review;
 
   } catch (error) {
-    console.error("askCoding error:", error);
+    console.error("askCoding error:", error.message);
     throw error;
   }
 }
