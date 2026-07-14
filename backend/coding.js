@@ -20,7 +20,7 @@ Jika ada bug, baiki.
 Pulangkan keseluruhan code yang sudah diperbaiki.
 Jangan beri penerangan.`,
       {
-        model: "openai/gpt-oss-120b",
+        model: "qwen/qwen3.6-27b",
         history,
       }
     );
