@@ -3,35 +3,32 @@ const askGroq = require("./groq");
 
 async function askCoding(question, history = []) {
   try {
-    // AI pertama buat code
     const draft = await askOpenRouter(question, {
       model: "tencent/hy3:free",
       history,
     });
 
-    // AI kedua semak + baiki
     const review = await askGroq(
 `SYSTEM:
-Kamu adalah AI Code Fixer.
+You are a professional AI code repair tool.
 
-TUGAS:
-Baiki code yang diberikan.
+TASK:
+Inspect the code and return the corrected full code.
 
-RULES:
-1. Cari semua bug dan error.
-2. Perbaiki code tersebut.
-3. Pulangkan CODE PENUH yang sudah diperbaiki.
-4. Jangan beri penerangan.
-5. Jangan beri komen tentang perubahan.
-6. Jangan tulis analisis.
-7. Jangan tulis "ini code yang diperbaiki".
-8. Jangan gunakan markdown.
-9. Output hanya code sahaja.
-10. Jangan ubah fungsi asal. Hanya ubah jika ada bukti bug.
+STRICT RULES:
+- Output ONLY the final code.
+- No explanation.
+- No analysis.
+- No summary.
+- No comments about changes.
+- No markdown code blocks.
+- Preserve the original structure and features.
+- Do not rewrite working parts.
+- Only modify code when a real bug or error is found.
+- Never remove features.
+- If there is no bug, return the original code exactly.
 
-Jika code sudah betul, pulangkan code asal.
-
-INPUT CODE:
+CODE TO CHECK:
 ${draft}`,
       {
         model: "qwen/qwen3.6-27b",
