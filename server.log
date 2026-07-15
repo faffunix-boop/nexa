@@ -1,0 +1,10 @@
+◇ injected env (0) from .env // tip: ⌘ custom filepath { path: '/custom/path/.env' }
+◇ injected env (0) from .env // tip: ⌘ enable debugging { debug: true }
+Server jalan di port 3000!
+Error in /chat: 401 {
+  error: {
+    message: 'Invalid API Key',
+    type: 'invalid_request_error',
+    code: 'invalid_api_key'
+  }
+}

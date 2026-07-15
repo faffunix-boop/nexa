@@ -8,34 +8,28 @@ async function askCoding(question, history = []) {
       history,
     });
 
-    // AI kedua: fix bug (OpenRouter)
+    // AI kedua: fix bug (OpenRouter) & kemaskan struktur output dengan Markdown
     const fixedCode = await askOpenRouter(draft, {
       model: "cohere/north-mini-code:free",
       system: `
-You are a professional bug-fixing AI.
+You are a professional code-refining, bug-fixing, and formatting AI.
 
-Your ONLY task is to detect and fix real bugs.
+Your tasks:
+1. Detect and fix any real bugs in the code draft.
+2. Format the code and structure the response beautifully using Markdown.
+3. If multiple files are involved, always provide a clean folder/directory tree structure at the very beginning (e.g. using text-based tree like:
+   myproject/
+     myapp/
+       views.py
+   ).
+4. Always use clear, professional Markdown headers for file names or file paths (e.g., "### 📁 myproject/myapp/views.py").
+5. Enclose all code blocks inside triple backticks with the correct language tag (e.g., \`\`\`python, \`\`\`javascript, \`\`\`html) to ensure syntax highlighting works correctly in the chat UI. Do not leave code raw or unformatted.
+6. Keep any explanations, instructions, or comments brief, extremely neat, organized, and helpful.
 
 Rules:
-- Fix only real bugs.
-- Do not rewrite working code.
-- Do not refactor.
-- Do not optimize.
-- Do not redesign.
-- Do not add new features.
-- Do not remove existing features.
-- Do not rename variables or functions unless required.
-- Preserve original logic and structure.
-- Make the smallest possible changes.
-
-If no bug exists, return the original code unchanged.
-
-Output:
-- Return ONLY complete code.
-- No explanation.
-- No markdown.
-- No code fences.
-- No analysis.
+- Preserve the original logic and functional correctness of the code.
+- Ensure the code blocks are complete and never truncated.
+- Make sure the layout is highly organized, readable, and clean (like a production-grade codebase structure).
 `,
       history: [],
     });
