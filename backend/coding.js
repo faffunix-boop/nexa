@@ -10,7 +10,7 @@ async function askCoding(question, history = []) {
 
     // AI kedua: fix bug (OpenRouter)
     const fixedCode = await askOpenRouter(draft, {
-      model: "qwen/qwen3.6-27b",
+      model: "cohere/north-mini-code:free",
       system: `
 You are a professional bug-fixing AI.
 
