@@ -4,7 +4,7 @@ const askGroq = require("./groq");
 async function askCoding(question, history = [], onProgress = () => {}) {
 let draft;
 
-onProgress("Laguna AI sedang membuat code...");
+onProgress("AI sedang membuat code...");
 
 try {
 draft = await askOpenRouter(question, {
@@ -23,7 +23,7 @@ if (!draft?.trim()) {
 throw err;
 }
 
-onProgress("Code disemak oleh GPT...");
+onProgress("Code disemak...");
 
 const reviewPrompt = `Semak code berikut dan betulkan jika ada bug.
 
