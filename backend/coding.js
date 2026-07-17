@@ -1,44 +1,45 @@
 const askOpenRouter = require("./openrouter");
+const askGroq = require("./groq");
 
-async function askCoding(question, history = []) {
+async function askCoding(question, history = [], onProgress = () => {}) {
+  let draft;
+
+  onProgress("Laguna AI sedang membuat code...");
+
   try {
-    // AI pertama: buat code
-    const draft = await askOpenRouter(question, {
-      model: "cohere/north-mini-code:free",
-      history,
-    });
-
-    // AI kedua: fix bug (OpenRouter) & kemaskan struktur output dengan Markdown
-    const fixedCode = await askOpenRouter(draft, {
+    draft = await askOpenRouter(question, {
       model: "tencent/hy3:free",
-      system: `
-You are a professional code-refining, bug-fixing, and formatting AI.
-
-Your tasks:
-1. Detect and fix any real bugs in the code draft.
-2. Format the code and structure the response beautifully using Markdown.
-3. If multiple files are involved, always provide a clean folder/directory tree structure at the very beginning (e.g. using text-based tree like:
-   myproject/
-     myapp/
-       views.py
-   ).
-4. Always use clear, professional Markdown headers for file names or file paths (e.g., "### 📁 myproject/myapp/views.py").
-5. Enclose all code blocks inside triple backticks with the correct language tag (e.g., \`\`\`python, \`\`\`javascript, \`\`\`html) to ensure syntax highlighting works correctly in the chat UI. Do not leave code raw or unformatted.
-6. Keep any explanations, instructions, or comments brief, extremely neat, organized, and helpful.
-
-Rules:
-- Preserve the original logic and functional correctness of the code.
-- Ensure the code blocks are complete and never truncated.
-- Make sure the layout is highly organized, readable, and clean (like a production-grade codebase structure).
-`,
-      history: [],
+      history,
+      system:
+        "Kamu pakar coding. Tulis code dengan format kemas (indent betul, satu statement satu baris). " +
+        "Untuk soalan simple, bagi code paling ringkas. Jangan reka konsep yang pengguna tak minta.",
     });
 
-    return fixedCode;
+    if (!draft?.trim()) {
+      throw new Error("OpenRouter tidak mengembalikan jawapan.");
+    }
+  } catch (err) {
+    throw err;
+  }
 
-  } catch (error) {
-    console.error("askCoding error:", error.message);
-    throw error;
+  onProgress("Code disemak oleh GPT...");
+
+  const reviewPrompt = `Semak code berikut dan betulkan jika ada bug.
+
+Soalan:
+${question}
+
+Code:
+${draft}`;
+
+  try {
+    const reviewed = await askGroq(reviewPrompt, {
+      model: "qwen/qwen3-32b",
+    });
+
+    return reviewed?.trim() ? reviewed : draft;
+  } catch {
+    return draft;
   }
 }
 
