@@ -11,6 +11,7 @@ function App() {
   const [load, setLoad] = useState(false);
   const [error, setError] = useState(null);
   const [copiedIdx, setCopiedIdx] = useState(null);
+  const [statusText, setStatusText] = useState("Nexa sedang berfikir...");
   const chatEndRef = useRef(null);
 
   useEffect(() => {
@@ -29,6 +30,7 @@ function App() {
     setChat((prev) => [...prev, { type: "user", text }]);
     setMsg("");
     setLoad(true);
+    setStatusText("Nexa sedang berfikir...");
     setError(null);
 
     try {
@@ -38,10 +40,40 @@ function App() {
         body: JSON.stringify({ question: text, history: historyForRequest }),
       });
 
-      if (!res.ok) throw new Error(`Server balas status ${res.status}`);
-      const data = await res.json();
+      if (!res.ok || !res.body) throw new Error(`Server balas status ${res.status}`);
 
-      setChat((prev) => [...prev, { type: "ai", text: data.answer }]);
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      let finalAnswer = null;
+      let serverError = null;
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const parts = buffer.split("\n\n");
+        buffer = parts.pop();
+
+        for (const part of parts) {
+          if (!part.startsWith("data: ")) continue;
+          const data = JSON.parse(part.slice(6));
+
+          if (data.type === "status") {
+            setStatusText(data.text);
+          } else if (data.type === "answer") {
+            finalAnswer = data.text;
+          } else if (data.type === "error") {
+            serverError = data.text;
+          }
+        }
+      }
+
+      if (serverError) throw new Error(serverError);
+      if (finalAnswer === null) throw new Error("Tiada jawapan diterima.");
+
+      setChat((prev) => [...prev, { type: "ai", text: finalAnswer }]);
     } catch (err) {
       setError("Gagal hubungi server. Cuba refresh.");
       setChat((prev) => [...prev, { type: "ai", text: "⚠️ Maaf, saya tak dapat balas sekarang." }]);
@@ -170,7 +202,7 @@ function App() {
                     <div className="nexa-blob" />
                     <div className="nexa-blob" />
                   </div>
-                  <span className="loading-text">Nexa sedang berfikir...</span>
+                  <span className="loading-text">{statusText}</span>
                 </div>
               </div>
             </div>
