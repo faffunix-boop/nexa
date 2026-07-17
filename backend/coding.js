@@ -1,5 +1,4 @@
 const askOpenRouter = require("./openrouter");
-const askGroq = require("./groq");
 
 async function askCoding(question, history = [], onProgress = () => {}) {
   let draft;
@@ -33,7 +32,7 @@ Code:
 ${draft}`;
 
   try {
-    const reviewed = await askGroq(reviewPrompt, {
+    const reviewed = await askOpenRouter(reviewPrompt, {
       model: "qwen/qwen3-32b",
     });
 
