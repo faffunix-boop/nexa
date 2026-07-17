@@ -17,20 +17,42 @@ app.use(express.static(distPath));
 app.post("/chat", async (req, res) => {
   const { question, history } = req.body;
 
+  res.setHeader("Content-Type", "text/event-stream");
+  res.setHeader("Cache-Control", "no-cache");
+  res.setHeader("Connection", "keep-alive");
+  if (res.flushHeaders) res.flushHeaders();
+
+  function sendStatus(text) {
+    res.write(`data: ${JSON.stringify({ type: "status", text })}\n\n`);
+  }
+  function sendAnswer(text) {
+    res.write(`data: ${JSON.stringify({ type: "answer", text })}\n\n`);
+    res.end();
+  }
+  function sendError(text) {
+    res.write(`data: ${JSON.stringify({ type: "error", text })}\n\n`);
+    res.end();
+  }
+
   try {
+    if (!question || !question.trim()) {
+      return sendError("Mesej tak boleh kosong.");
+    }
+
     const task = await classifyTask(question, history || []);
 
     let answer;
     if (task === "code") {
-      answer = await askCoding(question, history || []);
+      answer = await askCoding(question, history || [], sendStatus);
     } else {
+      sendStatus("GPT sedang berfikir...");
       answer = await askGeneral(question, history || []);
     }
 
-    res.json({ answer });
+    sendAnswer(answer);
   } catch (error) {
     console.error("Error in /chat:", error.response?.status, error.response?.data || error.message);
-    res.status(500).json({ error: "Ada masalah pada server. Pastikan API key betul." });
+    sendError("Ada masalah pada server. Pastikan API key betul.");
   }
 });
 
