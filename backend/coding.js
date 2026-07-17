@@ -1,6 +1,18 @@
 const askOpenRouter = require("./openrouter");
 const askGroq = require("./groq");
 
+function extractCode(text) {
+  if (!text) return "";
+
+  const match = text.match(/```(?:\w+)?\s*([\s\S]*?)```/);
+
+  if (match) {
+    return "```" + match[1].trim() + "```";
+  }
+
+  return text.trim();
+}
+
 async function askCoding(question, history = [], onProgress = () => {}) {
   let draft;
 
@@ -25,36 +37,41 @@ async function askCoding(question, history = [], onProgress = () => {}) {
 
   onProgress("Code disemak...");
 
-  const reviewPrompt = `Semak code berikut dan betulkan jika ada bug.
+  const reviewPrompt = `
+TUGAS: BETULKAN CODE SAHAJA.
+
+Peraturan ketat:
+- Pulangkan hanya code akhir.
+- Jangan beri penerangan.
+- Jangan beri cadangan.
+- Jangan tulis analisis.
+- Jangan tambah feature.
+- Kekalkan logik asal.
+- Jika tiada bug, pulangkan code asal.
 
 Soalan:
 ${question}
 
 Code:
-${draft}`;
+${draft}
+`;
 
   try {
     const reviewed = await askGroq(reviewPrompt, {
       model: "qwen/qwen3.6-27b",
       system: `
-Kamu adalah AI pembaiki code/self review.
+Kamu adalah AI code fixer.
 
-Arahan:
-- Berikan code sahaja.
-- Jangan beri penerangan.
-- Jangan beri cadangan.
-- Jangan tulis analisis.
-- Jangan senaraikan bug.
-- Betulkan bug yang nyata sahaja.
-- Kekalkan logik asal.
-- Jangan tambah feature baru.
-- Jangan ubah struktur jika tidak diperlukan.
-- Pastikan code lengkap dan boleh dijalankan.
-- Gunakan Markdown code block dengan bahasa yang betul.
+WAJIB:
+- Output hanya code.
+- Tiada ayat penjelasan.
+- Tiada cadangan.
+- Tiada analisis.
+- Betulkan bug sahaja.
 `,
     });
 
-    return reviewed?.trim() ? reviewed : draft;
+    return reviewed?.trim() ? extractCode(reviewed) : draft;
 
   } catch {
     return draft;
