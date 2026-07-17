@@ -35,7 +35,7 @@ ${draft}`;
 
 try {
 const reviewed = await askGroq(reviewPrompt, {
-model: "qwen/qwen3-32b",
+model: "qwen/qwen3.6-27b",
 });
 
 return reviewed?.trim() ? reviewed : draft;
