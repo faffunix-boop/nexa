@@ -12,7 +12,6 @@ function App() {
   const [error, setError] = useState(null);
   const [copiedIdx, setCopiedIdx] = useState(null);
   const [statusText, setStatusText] = useState("Nexa sedang berfikir...");
-  const [expandedProcess, setExpandedProcess] = useState(null);
   const chatEndRef = useRef(null);
 
   useEffect(() => {
@@ -191,25 +190,6 @@ function App() {
                   </ReactMarkdown>
                 ) : (
                   <p className="msg-text">{c.text}</p>
-                )}
-                {c.type === "ai" && c.process && c.process.length > 0 && (
-                  <div className="process-info">
-                    <button
-                      className="process-toggle"
-                      onClick={() =>
-                        setExpandedProcess(expandedProcess === i ? null : i)
-                      }
-                    >
-                      {expandedProcess === i ? "▲" : "▼"} Lihat proses ({c.process.length} langkah)
-                    </button>
-                    {expandedProcess === i && (
-                      <ol className="process-list">
-                        {c.process.map((step, idx) => (
-                          <li key={idx}>{step}</li>
-                        ))}
-                      </ol>
-                    )}
-                  </div>
                 )}
               </div>
             </div>
