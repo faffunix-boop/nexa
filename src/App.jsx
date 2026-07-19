@@ -1,16 +1,113 @@
 import { useState, useRef, useEffect } from "react";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
-import { oneDark } from "react-syntax-highlighter/dist/esm/styles/prism";
+import { okaidia } from "react-syntax-highlighter/dist/esm/styles/prism";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import "./App.css";
+
+function CodeBlock({ lang, content }) {
+  const [activeTab, setActiveTab] = useState("kod");
+  const [copied, setCopied] = useState(false);
+
+  const canPreview = ["html", "xml", "svg", "htm"].includes(lang.toLowerCase()) ||
+    content.trim().startsWith("<!DOCTYPE") ||
+    content.trim().startsWith("<html") ||
+    content.trim().startsWith("<div") ||
+    content.trim().startsWith("<svg");
+
+  function copyToClipboard() {
+    navigator.clipboard.writeText(content).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }
+
+  return (
+    <div className="code-block-wrapper">
+      <div className="code-block-header">
+        <button className="close-btn-mock" aria-label="Tutup">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+        {canPreview ? (
+          <div className="tabs-container">
+            <button
+              className={`tab-btn ${activeTab === "kod" ? "active" : ""}`}
+              onClick={() => setActiveTab("kod")}
+            >
+              Kod
+            </button>
+            <button
+              className={`tab-btn ${activeTab === "pratonton" ? "active" : ""}`}
+              onClick={() => setActiveTab("pratonton")}
+            >
+              Pratonton
+            </button>
+          </div>
+        ) : (
+          <span className="code-lang">{lang}</span>
+        )}
+        <button className="copy-btn-chatgpt" onClick={copyToClipboard} aria-label="Salin">
+          {copied ? (
+            <span className="copied-text">Disalin!</span>
+          ) : (
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+            </svg>
+          )}
+        </button>
+      </div>
+      <div className="code-block-body">
+        {activeTab === "pratonton" && canPreview ? (
+          <div className="preview-container">
+            <iframe
+              title="Pratonton"
+              srcDoc={content}
+              sandbox="allow-scripts"
+              className="preview-iframe"
+            />
+          </div>
+        ) : (
+          <SyntaxHighlighter
+            language={lang}
+            style={okaidia}
+            wrapLongLines={true}
+            customStyle={{
+              margin: 0,
+              borderRadius: "0",
+              padding: "16px 20px",
+              fontSize: "13px",
+              lineHeight: "1.6",
+              background: "#0d0d0d",
+              whiteSpace: "pre-wrap",
+              overflowWrap: "anywhere",
+              wordBreak: "break-word",
+            }}
+            codeTagProps={{
+              style: {
+                whiteSpace: "pre-wrap",
+                overflowWrap: "anywhere",
+                wordBreak: "break-word",
+                fontFamily: '"JetBrains Mono", monospace',
+              },
+            }}
+          >
+            {content}
+          </SyntaxHighlighter>
+        )}
+      </div>
+    </div>
+  );
+}
 
 function App() {
   const [msg, setMsg] = useState("");
   const [chat, setChat] = useState([]);
   const [load, setLoad] = useState(false);
   const [error, setError] = useState(null);
-  const [copiedIdx, setCopiedIdx] = useState(null);
   const [statusText, setStatusText] = useState("Nexa sedang berfikir...");
   const chatEndRef = useRef(null);
 
@@ -92,22 +189,12 @@ function App() {
     }
   }
 
-  function copyCode(content, key) {
-    navigator.clipboard.writeText(content).then(() => {
-      setCopiedIdx(key);
-      setTimeout(() => setCopiedIdx(null), 1500);
-    });
-  }
-
   const MarkdownComponents = {
     code({ node, className, children, ...props }) {
       const match = /language-(\w+)/.exec(className || "");
       const isInline = !match;
       const lang = match ? match[1] : "text";
       const content = String(children).replace(/\n$/, "");
-      const key = node?.position
-        ? `${node.position.start.line}-${node.position.start.column}`
-        : content.slice(0, 20) + content.length;
 
       if (isInline) {
         return (
@@ -117,44 +204,7 @@ function App() {
         );
       }
 
-      return (
-        <div className="code-block-wrapper">
-          <div className="code-block-header">
-            <span className="code-lang">{lang}</span>
-            <button className="copy-btn" onClick={() => copyCode(content, key)}>
-              {copiedIdx === key ? "Disalin!" : "Salin"}
-            </button>
-          </div>
-          <div className="code-block-body">
-            <SyntaxHighlighter
-              language={lang}
-              style={oneDark}
-              wrapLongLines={true}
-              customStyle={{
-                margin: 0,
-                borderRadius: "0",
-                padding: "12px 14px",
-                fontSize: "12px",
-                lineHeight: "1.5",
-                background: "transparent",
-                whiteSpace: "pre-wrap",
-                overflowWrap: "anywhere",
-                wordBreak: "break-word",
-              }}
-              codeTagProps={{
-                style: {
-                  whiteSpace: "pre-wrap",
-                  overflowWrap: "anywhere",
-                  wordBreak: "break-word",
-                  fontFamily: '"JetBrains Mono", monospace',
-                },
-              }}
-            >
-              {content}
-            </SyntaxHighlighter>
-          </div>
-        </div>
-      );
+      return <CodeBlock lang={lang} content={content} />;
     },
   };
 
