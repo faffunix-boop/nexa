@@ -1,81 +1,72 @@
 const askOpenRouter = require("./openrouter");
 const askGroq = require("./groq");
-
-function extractCode(text) {
-  if (!text) return "";
-
-  const match = text.match(/```(?:\w+)?\s*([\s\S]*?)```/);
-
-  if (match) {
-    return "```" + match[1].trim() + "```";
-  }
-
-  return text.trim();
-}
+const plan = require("./planner");
+const validate = require("./validator");
+const format = require("./formatter");
+const logger = require("./logger");
 
 async function askCoding(question, history = [], onProgress = () => {}) {
-  let draft;
+  const t0 = logger.start(question);
 
+  // ---- Planner ----
+  onProgress("Merancang pendekatan...");
+  const rancangan = await plan(question);
+  logger.stage("Planner", t0);
+
+  // ---- Coder ----
   onProgress("AI sedang membuat code...");
+  const contextPrompt = rancangan
+    ? `Rancangan:\n${rancangan}\n\nSoalan pengguna: ${question}`
+    : question;
 
+  let draft;
   try {
-    draft = await askOpenRouter(question, {
+    draft = await askOpenRouter(contextPrompt, {
       model: "tencent/hy3:free",
       history,
       system:
         "Kamu pakar coding. Tulis code dengan format kemas (indent betul, satu statement satu baris). " +
         "Untuk soalan simple, bagi code paling ringkas. Jangan reka konsep yang pengguna tak minta.",
     });
-
-    if (!draft?.trim()) {
-      throw new Error("OpenRouter tidak mengembalikan jawapan.");
-    }
-
+    if (!draft?.trim()) throw new Error("OpenRouter tidak mengembalikan jawapan.");
   } catch (err) {
     throw err;
   }
+  logger.stage("Coder", t0);
 
+  // ---- Reviewer ----
   onProgress("Code disemak...");
-
-  const reviewPrompt = `
-TUGAS: BETULKAN CODE SAHAJA.
-
-Peraturan ketat:
-- Pulangkan hanya code akhir.
-- Jangan beri penerangan.
-- Jangan beri cadangan.
-- Jangan tulis analisis.
-- Jangan tambah feature.
-- Kekalkan logik asal.
-- Jika tiada bug, pulangkan code asal.
+  const reviewPrompt = `Semak code berikut dan betulkan jika ada bug.
 
 Soalan:
 ${question}
 
 Code:
-${draft}
-`;
+${draft}`;
 
+  let reviewed;
   try {
-    const reviewed = await askGroq(reviewPrompt, {
-      model: "qwen/qwen3.6-27b",
-      system: `
-Kamu adalah AI code fixer.
-
-WAJIB:
-- Output hanya code.
-- Tiada ayat penjelasan.
-- Tiada cadangan.
-- Tiada analisis.
-- Betulkan bug sahaja.
-`,
-    });
-
-    return reviewed?.trim() ? extractCode(reviewed) : draft;
-
+    reviewed = await askGroq(reviewPrompt, { model: "qwen/qwen3-32b" });
+    if (!reviewed?.trim()) reviewed = draft;
   } catch {
-    return draft;
+    reviewed = draft;
   }
+  logger.stage("Reviewer", t0);
+
+  // ---- Validator ----
+  onProgress("Mengesahkan jawapan...");
+  const validation = validate(reviewed);
+  if (!validation.valid) {
+    console.warn("[VALIDATOR] Isu dikesan:", validation.issues.join("; "));
+  }
+  logger.stage("Validator", t0);
+
+  // ---- Formatter ----
+  const finalAnswer = format(reviewed);
+  logger.stage("Formatter", t0);
+
+  logger.finish(t0);
+  return finalAnswer;
 }
 
 module.exports = askCoding;
