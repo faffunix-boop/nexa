@@ -14,7 +14,7 @@ async function askCoding(question, history = [], onProgress = () => {}) {
   logger.stage("Planner", t0);
 
   // ---- Coder ----
-  onProgress("Laguna AI sedang membuat code...");
+  onProgress("AI sedang membuat code...");
   const contextPrompt = rancangan
     ? `Rancangan:\n${rancangan}\n\nSoalan pengguna: ${question}`
     : question;
@@ -40,7 +40,7 @@ async function askCoding(question, history = [], onProgress = () => {}) {
   logger.stage("Coder", t0);
 
   // ---- Reviewer ----
-  onProgress("Code disemak oleh GPT...");
+  onProgress("Code disemak...");
   const reviewPrompt = `Semak code berikut dan betulkan jika ada bug.
 
 Soalan:
