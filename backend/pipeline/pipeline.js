@@ -1,47 +1,35 @@
 const logger = require("../utils/logger");
 
+const router = require("./router");
+const planner = require("./planner");
+const coder = require("./coder");
+const reviewer = require("./reviewer");
+const validator = require("./validator");
+const formatter = require("./formatter");
+
 async function runPipeline(input) {
   logger.start();
 
   try {
-    logger.info("Pipeline", "Starting pipeline...");
+    let data = await router(input);
+    data = await planner(data);
+    data = await coder(data);
+    data = await reviewer(data);
+    data = await validator(data);
 
-    // Router
-    logger.info("Router", "Waiting...");
+    const output = await formatter(data);
 
-    // Planner
-    logger.info("Planner", "Waiting...");
-
-    // Coder
-    logger.info("Coder", "Waiting...");
-
-    // Reviewer
-    logger.info("Reviewer", "Waiting...");
-
-    // Validator
-    logger.info("Validator", "Waiting...");
-
-    // Formatter
-    logger.info("Formatter", "Waiting...");
-
-    logger.success("Pipeline", "Pipeline completed successfully.");
-
+    logger.success("Pipeline", "Finished successfully.");
     logger.finish();
 
-    return {
-      success: true,
-      output: input,
-    };
+    return output;
+
   } catch (err) {
     logger.error("Pipeline", err);
-
-    return {
-      success: false,
-      error: err.message,
-    };
+    throw err;
   }
 }
 
 module.exports = {
-  runPipeline,
+  runPipeline
 };
