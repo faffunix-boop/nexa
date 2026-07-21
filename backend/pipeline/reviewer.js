@@ -1,13 +1,34 @@
 const logger = require("../utils/logger");
 
 async function reviewer(data) {
-  logger.info("Reviewer", "Reviewing response...");
+  logger.info("Reviewer", "Menyemak hasil AI...");
+
+  const { response, sendStatus = () => {} } = data;
+
+  sendStatus("🔍 Reviewer sedang menyemak...");
+
+  const issues = [];
+
+  if (!response || !response.trim()) {
+    issues.push("AI tidak menghasilkan jawapan.");
+  }
+
+  if (response && response.length < 20) {
+    issues.push("Jawapan terlalu pendek.");
+  }
+
+  logger.success(
+    "Reviewer",
+    issues.length
+      ? `${issues.length} isu ditemui.`
+      : "Tiada isu ditemui."
+  );
 
   return {
     ...data,
     review: {
-      passed: true,
-      issues: []
+      passed: issues.length === 0,
+      issues
     }
   };
 }
