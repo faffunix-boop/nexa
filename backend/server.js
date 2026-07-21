@@ -2,6 +2,7 @@ const express = require("express");
 const cors = require("cors");
 const path = require("path");
 
+const classifyTask = require("./router");
 const { runPipeline } = require("./pipeline/pipeline");
 
 const app = express();
@@ -18,28 +19,37 @@ app.post("/chat", async (req, res) => {
   res.setHeader("Content-Type", "text/event-stream");
   res.setHeader("Cache-Control", "no-cache");
   res.setHeader("Connection", "keep-alive");
-  if (res.flushHeaders) res.flushHeaders();
+
+  if (res.flushHeaders) {
+    res.flushHeaders();
+  }
 
   function sendStatus(text) {
-    res.write(`data: ${JSON.stringify({
-      type: "status",
-      text
-    })}\n\n`);
+    res.write(
+      `data: ${JSON.stringify({
+        type: "status",
+        text
+      })}\n\n`
+    );
   }
 
   function sendAnswer(text) {
-    res.write(`data: ${JSON.stringify({
-      type: "answer",
-      text
-    })}\n\n`);
+    res.write(
+      `data: ${JSON.stringify({
+        type: "answer",
+        text
+      })}\n\n`
+    );
     res.end();
   }
 
   function sendError(text) {
-    res.write(`data: ${JSON.stringify({
-      type: "error",
-      text
-    })}\n\n`);
+    res.write(
+      `data: ${JSON.stringify({
+        type: "error",
+        text
+      })}\n\n`
+    );
     res.end();
   }
 
@@ -48,9 +58,15 @@ app.post("/chat", async (req, res) => {
       return sendError("Mesej tak boleh kosong.");
     }
 
-    sendStatus("🚀 Menjalankan Nexa Pipeline...");
+    sendStatus("Mengelaskan permintaan...");
+
+    const task = await classifyTask(
+      question,
+      history || []
+    );
 
     const answer = await runPipeline({
+      task,
       question,
       history: history || [],
       sendStatus
@@ -58,9 +74,12 @@ app.post("/chat", async (req, res) => {
 
     sendAnswer(answer);
 
-  } catch (err) {
-    console.error(err);
-    sendError(err.message || "Pipeline Error");
+  } catch (error) {
+    console.error("Pipeline Error:", error);
+
+    sendError(
+      error.message || "Ada masalah pada server."
+    );
   }
 });
 
@@ -71,5 +90,5 @@ app.use((req, res) => {
 const port = process.env.PORT || 3000;
 
 app.listen(port, () => {
-  console.log(`🚀 Nexa Server Running : ${port}`);
+  console.log(`Nexa Server berjalan di port ${port}`);
 });
