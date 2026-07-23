@@ -1,46 +1,90 @@
-class Logger {
-  constructor() {
-    this.startTime = 0;
-  }
+const path = require("path");
 
-  start() {
-    this.startTime = Date.now();
-    console.log("\n🚀 ===============================");
-    console.log("🚀 NEXA PIPELINE STARTED");
-    console.log("🚀 ===============================\n");
-  }
+function now() {
+  return new Date().toLocaleTimeString("ms-MY", {
+    hour12: false
+  });
+}
 
-  info(module, message) {
-    console.log(`🔵 [${module}] ${message}`);
-  }
+function line(error) {
+  if (!error || !error.stack) return "-";
 
-  success(module, message) {
-    console.log(`🟢 [${module}] ${message}`);
-  }
+  const stack = error.stack.split("\n");
 
-  warn(module, message) {
-    console.log(`🟡 [${module}] ${message}`);
-  }
-
-  error(module, error) {
-    console.log(`🔴 [${module}] ERROR`);
-
-    if (error instanceof Error) {
-      console.log(`   Message : ${error.message}`);
-      console.log(`   Stack   :`);
-      console.log(error.stack);
-    } else {
-      console.log(`   ${error}`);
+  for (const s of stack) {
+    if (s.includes("backend")) {
+      return s.trim();
     }
   }
 
-  finish() {
-    const total = Date.now() - this.startTime;
-
-    console.log("\n🏁 ===============================");
-    console.log(`🏁 Pipeline Finished (${total} ms)`);
-    console.log("🏁 ===============================\n");
-  }
+  return stack[1]?.trim() || "-";
 }
 
-module.exports = new Logger();
+module.exports = {
+
+  start() {
+    console.log("\n========================================");
+    console.log(`[${now()}]  PIPELINE START`);
+    console.log("========================================");
+  },
+
+  finish() {
+    console.log("========================================");
+    console.log(`[${now()}]  PIPELINE FINISH`);
+    console.log("========================================\n");
+  },
+
+  info(module, message) {
+    console.log(`[${now()}]   ${module}`);
+    console.log(`   ${message}`);
+  },
+
+  success(module, message) {
+    console.log(`[${now()}]  ${module}`);
+    console.log(`   ${message}`);
+  },
+
+  warn(module, message) {
+    console.log(`[${now()}]  ${module}`);
+    console.log(`   ${message}`);
+  },
+
+  error(module, err) {
+
+    console.log("\n========================================");
+    console.log(`[${now()}]  ERROR`);
+    console.log("========================================");
+
+    console.log(`Module : ${module}`);
+
+    console.log(
+      `Type   : ${err.name || "Error"}`
+    );
+
+    console.log(
+      `Reason : ${err.message || err}`
+    );
+
+    console.log(
+      `Line   : ${line(err)}`
+    );
+
+    if (err.response) {
+
+      console.log(
+        `Status : ${err.response.status}`
+      );
+
+      console.log(
+        "Response:"
+      );
+
+      console.log(err.response.data);
+
+    }
+
+    console.log("========================================\n");
+
+  }
+
+};
