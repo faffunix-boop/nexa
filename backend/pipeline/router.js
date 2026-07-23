@@ -1,76 +1,46 @@
-// backend/pipeline/router.js
-
 const logger = require("../utils/logger");
 
 async function router(data) {
-  logger.info("Router", "Menganalisis permintaan pengguna...");
+  logger.info("Router", "Memilih AI...");
 
   const {
+    task,
     question,
     history = [],
     sendStatus = () => {}
   } = data;
 
-  sendStatus("Router sedang memilih AI...");
+  sendStatus("Router memilih AI...");
 
-  const text = question.toLowerCase();
+  let provider;
+  let model;
+  let system;
 
-  const codeKeywords = [
-    "code",
-    "coding",
-    "javascript",
-    "js",
-    "node",
-    "nodejs",
-    "html",
-    "css",
-    "react",
-    "vue",
-    "python",
-    "java",
-    "c++",
-    "cpp",
-    "php",
-    "bug",
-    "error",
-    "fix",
-    "repair",
-    "debug",
-    "api",
-    "express",
-    "mysql",
-    "mongodb",
-    "sql",
-    "json",
-    "github",
-    "pipeline",
-    "function",
-    "class",
-    "script"
-  ];
+  if (task === "code") {
+    provider = "openrouter";
+    model = "tencent/hunyuan-a13b-instruct:free";
 
-  const isCoding = codeKeywords.some(word => text.includes(word));
+    system = `
+Kamu ialah AI Coding Nexa.
 
-  const provider = isCoding ? "openrouter" : "groq";
+Peraturan:
+- Berikan code lengkap.
+- Jangan ringkaskan code.
+- Jangan ubah bahagian yang tidak diminta.
+- Jika membaiki bug, baiki bug sahaja.
+- Jangan beri penerangan panjang.
+`;
+  } else {
+    provider = "groq";
+    model = "openai/gpt-oss-120b";
 
-  const model = isCoding
-    ? "tencent/hy3:free"
-    : "openai/gpt-oss-120b";
+    system = `
+Kamu ialah Nexa AI Assistant.
 
-  const system = isCoding
-    ? [
-        "Kamu ialah AI coding Nexa.",
-        "Jawab dengan code lengkap.",
-        "Jangan ringkaskan code.",
-        "Jangan beri cadangan jika pengguna meminta code.",
-        "Pastikan code boleh digunakan."
-      ].join("\n")
-    : [
-        "Kamu ialah Nexa.",
-        "Jawab dengan jelas.",
-        "Gunakan Markdown yang kemas.",
-        "Jawab dalam Bahasa Melayu atau Indonesia mengikut konteks."
-      ].join("\n");
+Jawab dengan jelas dan padat.
+Gunakan Bahasa Melayu atau Indonesia mengikut pengguna.
+`;
+  }
 
   logger.success(
     "Router",
@@ -79,12 +49,11 @@ async function router(data) {
 
   return {
     ...data,
-    task: isCoding ? "code" : "general",
+    question,
+    history,
     provider,
     model,
-    system,
-    question,
-    history
+    system
   };
 }
 
