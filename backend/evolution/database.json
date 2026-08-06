@@ -1,20 +1,20 @@
 {
   "providers": {
     "groq": {
-      "openai/gpt-oss-120b": {
+      "llama-3.1-8b-instant": {
         "general": {
           "success": 0,
-          "failed": 2,
-          "avgSpeed": 0.0835,
+          "failed": 0,
+          "avgSpeed": 0,
           "avgTokens": 0,
-          "score": 64,
-          "totalExecutionTime": 0.167,
+          "score": 100,
+          "totalExecutionTime": 0,
           "totalTokens": 0,
-          "usageCount": 2,
+          "usageCount": 0,
           "timeoutCount": 0,
           "emptyResponseCount": 0,
-          "validationFailedCount": 2,
-          "crashCount": 2,
+          "validationFailedCount": 0,
+          "crashCount": 0,
           "reviewerPassCount": 0,
           "validatorPassCount": 0
         }

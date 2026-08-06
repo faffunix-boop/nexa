@@ -145,7 +145,7 @@ async function runPipeline(data) {
     const isValidationFail = err.message && (err.message.toLowerCase().includes("validation") || (data && data.valid === false));
 
     const prov = data && data.provider ? data.provider : (chosenProvider || "groq");
-    const mod = data && data.model ? data.model : (chosenModel || "openai/gpt-oss-120b");
+    const mod = data && data.model ? data.model : (chosenModel || "llama-3.1-8b-instant");
     const tsk = data && data.task ? data.task : (taskCategory || "general");
 
     recordRequest(prov, mod, tsk, {

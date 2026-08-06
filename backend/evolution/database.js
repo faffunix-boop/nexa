@@ -44,7 +44,7 @@ function initializeDatabase() {
   const defaultTemplate = {
     providers: {
       groq: {
-        "openai/gpt-oss-120b": {
+        "llama-3.1-8b-instant": {
           general: createEmptyStats()
         },
         "llama-3.3-70b-versatile": {
