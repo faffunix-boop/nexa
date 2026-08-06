@@ -538,6 +538,7 @@ body {
   flex-direction: column;
   gap: 24px;
   width: 100%;
+  position: relative;
 }
 
 .conversation-inner {
@@ -583,6 +584,11 @@ body {
   transition: border-color 120ms ease;
   max-width: 100%;
   overflow-x: hidden; /* Smartphone compatibility */
+}
+
+[data-theme="dark"] .ai-card {
+  /* Subtle gradient so the liquid-glass code block below has something to blur */
+  background: linear-gradient(135deg, rgba(47, 129, 247, 0.04), rgba(88, 166, 255, 0.02));
 }
 
 .ai-card-header {
@@ -721,12 +727,17 @@ body {
   border-color: var(--accent);
 }
 
-/* 4. Code Block Style - ChatGPT Inspired */
+/* 4. Code Block Style - Liquid Glass */
 .code-block-wrapper {
   margin: 16px 0;
-  border: 1px solid #343541;
-  border-radius: 8px;
-  background-color: #0d0d0d;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -738,12 +749,15 @@ body {
   align-items: center;
   justify-content: space-between;
   padding: 10px 16px;
-  background-color: #2f2f2f;
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   color: #c5c5d2;
   font-size: 12px;
   font-family: inherit;
   font-weight: 500;
   text-transform: lowercase;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .code-block-header .code-lang {
@@ -777,7 +791,7 @@ body {
 
 .code-block-body {
   overflow-x: auto;
-  background-color: #0d0d0d;
+  background: transparent;
 }
 
 .code-block-body code {
@@ -798,6 +812,43 @@ body {
 [data-theme="dark"] .inline-code {
   background-color: rgba(255, 255, 255, 0.1);
   color: #f2afab;
+}
+
+/* Dark mode: stronger liquid-glass treatment for code blocks */
+[data-theme="dark"] .code-block-wrapper {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    inset 0 0 40px rgba(47, 129, 247, 0.03);
+}
+
+[data-theme="dark"] .code-block-header {
+  background: rgba(255, 255, 255, 0.03);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  color: #d5d8dc;
+}
+
+[data-theme="dark"] .code-block-header .copy-btn:hover {
+  color: #58A6FF;
+}
+
+/* Soft glow behind conversation area in dark mode so backdrop-filter has
+   something to blur (creates the "liquid" light diffusion effect) */
+[data-theme="dark"] .conversation-area::before {
+  content: "";
+  position: fixed;
+  top: 20%;
+  left: 30%;
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(circle, rgba(47, 129, 247, 0.15), transparent 70%);
+  filter: blur(60px);
+  z-index: -1;
+  pointer-events: none;
 }
 
 /* 5. Composer (Sticky Bottom) */
@@ -1083,3 +1134,4 @@ body {
     font-size: 14px;
   }
 }
+
