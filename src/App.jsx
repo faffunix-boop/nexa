@@ -481,11 +481,38 @@ function App() {
     }
   }
 
-  function copyCode(content, key) {
-    navigator.clipboard.writeText(content).then(() => {
+  function fallbackCopy(content, key) {
+    try {
+      const textarea = document.createElement("textarea");
+      textarea.value = content;
+      textarea.style.position = "fixed";
+      textarea.style.opacity = "0";
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand("copy");
+      document.body.removeChild(textarea);
       setCopiedIdx(key);
       setTimeout(() => setCopiedIdx(null), 1500);
-    });
+    } catch (err) {
+      console.error("Gagal menyalin kod:", err);
+      setCopiedIdx(key);
+      setTimeout(() => setCopiedIdx(null), 1500);
+    }
+  }
+
+  function copyCode(content, key) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(content)
+        .then(() => {
+          setCopiedIdx(key);
+          setTimeout(() => setCopiedIdx(null), 1500);
+        })
+        .catch(() => {
+          fallbackCopy(content, key);
+        });
+    } else {
+      fallbackCopy(content, key);
+    }
   }
 
   const MarkdownComponents = {
@@ -509,9 +536,24 @@ function App() {
       return (
         <div className="code-block-wrapper">
           <div className="code-block-header">
-            <span>{lang}</span>
+            <span className="code-lang">{lang}</span>
             <button className="copy-btn" onClick={() => copyCode(content, key)}>
-              {copiedIdx === key ? "Disalin!" : "Salin kod"}
+              {copiedIdx === key ? (
+                <>
+                  <svg stroke="currentColor" fill="none" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round" className="copy-btn-icon" height="14" width="14" xmlns="http://www.w3.org/2000/svg">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                  </svg>
+                  <span>Disalin!</span>
+                </>
+              ) : (
+                <>
+                  <svg stroke="currentColor" fill="none" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round" className="copy-btn-icon" height="14" width="14" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+                    <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
+                  </svg>
+                  <span>Salin kod</span>
+                </>
+              )}
             </button>
           </div>
           <div className="code-block-body">

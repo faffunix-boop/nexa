@@ -721,12 +721,12 @@ body {
   border-color: var(--accent);
 }
 
-/* 4. Code Block Style (kelabu gelap, monospace, header, copy button) */
+/* 4. Code Block Style - ChatGPT Inspired */
 .code-block-wrapper {
   margin: 16px 0;
-  border: 1px solid var(--code-border);
+  border: 1px solid #343541;
   border-radius: 8px;
-  background-color: var(--code-bg);
+  background-color: #0d0d0d;
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -737,44 +737,67 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 16px;
-  background-color: rgba(255, 255, 255, 0.04);
-  border-bottom: 1px solid var(--code-border);
-  color: var(--code-text);
-  font-size: 11px;
-  font-family: "JetBrains Mono", monospace;
-  text-transform: uppercase;
-  font-weight: 600;
+  padding: 10px 16px;
+  background-color: #2f2f2f;
+  color: #c5c5d2;
+  font-size: 12px;
+  font-family: inherit;
+  font-weight: 500;
+  text-transform: lowercase;
+}
+
+.code-block-header .code-lang {
+  font-family: inherit;
 }
 
 .code-block-header .copy-btn {
   background: none;
   border: none;
-  color: var(--code-text);
+  color: #b4b4b4;
   cursor: pointer;
-  font-size: 11px;
-  font-weight: 500;
-  padding: 2px 6px;
+  font-size: 12px;
+  font-weight: 400;
+  padding: 4px 8px;
   border-radius: 4px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: color 120ms ease;
 }
 
 .code-block-header .copy-btn:hover {
-  background-color: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+  background-color: transparent;
+}
+
+.copy-btn-icon {
+  flex-shrink: 0;
+  stroke: currentColor;
 }
 
 .code-block-body {
   overflow-x: auto;
+  background-color: #0d0d0d;
+}
+
+.code-block-body code {
+  display: block !important;
 }
 
 .inline-code {
-  background-color: var(--border);
-  color: var(--accent);
-  padding: 2px 6px;
+  background-color: rgba(0, 0, 0, 0.05);
+  color: #eb5757;
+  padding: 2px 4px;
   border-radius: 4px;
   font-family: "JetBrains Mono", monospace;
-  font-size: 0.9em;
+  font-size: 0.875em;
   font-weight: 500;
   display: inline !important;
+}
+
+[data-theme="dark"] .inline-code {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #f2afab;
 }
 
 /* 5. Composer (Sticky Bottom) */
