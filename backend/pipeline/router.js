@@ -15,7 +15,7 @@ async function router(data) {
   let provider, model;
   if (task === "code") {
     provider = "openrouter";
-    model = "cohere/north-mini-code:free";
+    model = "nvidia/nemotron-3-ultra-550b-a55b:free";
   } else {
     provider = "groq";
     model = "openai/gpt-oss-120b";
