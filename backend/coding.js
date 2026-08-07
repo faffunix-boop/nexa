@@ -1,5 +1,4 @@
 const askOpenRouter = require("./openrouter");
-const askGroq = require("./groq");
 const plan = require("./planner");
 const validate = require("./validator");
 const format = require("./formatter");
@@ -51,7 +50,7 @@ ${draft}`;
 
   let reviewed;
   try {
-    reviewed = await askGroq(reviewPrompt, { model: "llama-3.1-8b-instant" });
+    reviewed = await askOpenRouter(reviewPrompt, { model: "openai/gpt-oss-20b:free" });
     if (!reviewed?.trim()) reviewed = draft;
   } catch {
     reviewed = draft;

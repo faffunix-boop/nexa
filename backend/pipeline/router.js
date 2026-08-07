@@ -17,8 +17,8 @@ async function router(data) {
     provider = "openrouter";
     model = "nvidia/nemotron-3-ultra-550b-a55b:free";
   } else {
-    provider = "groq";
-    model = "openai/gpt-oss-120b";
+    provider = "openrouter";
+    model = "qwen/qwen3-235b-a22b-2507";
   }
   let system;
 

@@ -8,13 +8,11 @@ console.log("=================================");
 console.log("Nexa Boot");
 console.log("=================================");
 console.log("OpenRouter Key :", !!process.env.OPENROUTER_KEY);
-console.log("Groq Key       :", !!process.env.GROQ_KEY);
 console.log("PORT           :", process.env.PORT || 3000);
 console.log("=================================");
 
 const classifyTask = require("./router");
 const { runPipeline } = require("./pipeline/pipeline");
-const askGroq = require("./groq");
 
 const app = express();
 
