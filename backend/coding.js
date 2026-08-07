@@ -22,7 +22,7 @@ async function askCoding(question, history = [], onProgress = () => {}) {
   let draft;
   try {
     draft = await askOpenRouter(contextPrompt, {
-      model: "inclusionai/ling-3.0-flash:free",
+      model: "cohere/north-mini-code:free",
       history,
       system:
         "Kamu pakar coding. Tulis code dengan format kemas (indent betul, satu statement satu baris). " +
