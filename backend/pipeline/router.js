@@ -15,7 +15,7 @@ async function router(data) {
   let provider, model;
   if (task === "code") {
     provider = "openrouter";
-    model = "nvidia/nemotron-3-ultra-550b-a55b:free";
+    model = "google/gemma-4-26b-a4b-it:free";
   } else {
     provider = "openrouter";
     model = "qwen/qwen3-235b-a22b-2507";
