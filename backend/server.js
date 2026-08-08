@@ -102,6 +102,22 @@ app.post("/chat", async (req, res) => {
   }
 });
 
+app.get("/evolution/status", (req, res) => {
+  res.json({
+    leaderboard: [],
+    dailyReport: [],
+    recommendations: []
+  });
+});
+
+app.post("/evolve", (req, res) => {
+  res.json({
+    mistake: "Sistem evolusi telah dipadamkan.",
+    patch: "Sistem berjalan dalam mod statik.",
+    newStrategy: ""
+  });
+});
+
 app.use((req, res) => {
   res.sendFile(path.join(distPath, "index.html"));
 });

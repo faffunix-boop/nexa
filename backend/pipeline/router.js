@@ -14,7 +14,7 @@ async function router(data) {
 
   // Static model configurations
   const provider = "openrouter";
-  const model = task === "code" ? "openrouter/free" : "qwen/qwen3-235b-a22b-2507:free";
+  const model = task === "code" ? "inclusionai/ling-3.0-flash:free" : "qwen/qwen3-235b-a22b-2507:free";
   let system;
 
   if (task === "code") {

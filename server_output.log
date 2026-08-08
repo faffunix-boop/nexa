@@ -1,9 +1,9 @@
-◇ injected env (0) from .env // tip: ⌘ enable debugging { debug: true }
+◇ injected env (0) from .env // tip: ⌘ custom filepath { path: '/custom/path/.env' }
 =================================
 Nexa Boot
 =================================
 OpenRouter Key : false
 PORT           : 3000
 =================================
-◇ injected env (0) from .env // tip: ⌁ auth for agents [www.vestauth.com]
+◇ injected env (0) from .env // tip: ◈ secrets for agents [www.dotenvx.com]
 Nexa Server berjalan di port 3000
