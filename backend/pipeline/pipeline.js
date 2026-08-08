@@ -50,52 +50,75 @@ async function runPipeline(data) {
     logger.moduleSuccess("Planner");
 
     // ===========================
-    // Coder
+    // Coder, Reviewer, Validator (Self-Correction Loop)
     // ===========================
 
-    currentModule = "Coder";
-    logger.moduleStart("Coder");
+    const maxRetries = 3;
+    let attempt = 0;
+    let passedValidation = false;
 
-    data = await coder(data);
+    while (attempt < maxRetries && !passedValidation) {
+      attempt++;
+      currentModule = `Coder (Percubaan ${attempt})`;
+      logger.moduleStart(currentModule);
 
-    logger.moduleSuccess(
-      "Coder",
-      `Response Length : ${data.response.length}`
-    );
+      if (attempt === 1) {
+        data = await coder(data);
+      } else {
+        // Self-correction phase
+        if (data.sendStatus) {
+          data.sendStatus(`Mengulang jana jawapan (Percubaan ${attempt}/${maxRetries}) kerana isu kualiti dikesan...`);
+        }
+        logger.info("Pipeline", `Melakukan pembetulan kendiri (Self-Correction) bagi percubaan ke-${attempt}`);
+        data = await coder(data, {
+          isCorrection: true,
+          attempt,
+          issues: data.validation || []
+        });
+      }
 
-    // ===========================
-    // Reviewer
-    // ===========================
-
-    currentModule = "Reviewer";
-    logger.moduleStart("Reviewer");
-
-    data = await reviewer(data);
-
-    logger.moduleSuccess(
-      "Reviewer",
-      `Passed : ${data.review.passed}`
-    );
-
-    // ===========================
-    // Validator
-    // ===========================
-
-    currentModule = "Validator";
-    logger.moduleStart("Validator");
-
-    data = await validator(data);
-
-    logger.moduleSuccess(
-      "Validator",
-      `Valid : ${data.valid}`
-    );
-
-    if (!data.valid) {
-      throw new Error(
-        data.validation.join("\n") ||
-        "Validation failed."
+      logger.moduleSuccess(
+        currentModule,
+        `Response Length : ${data.response ? data.response.length : 0}`
       );
+
+      // ===========================
+      // Reviewer
+      // ===========================
+
+      currentModule = `Reviewer (Percubaan ${attempt})`;
+      logger.moduleStart(currentModule);
+
+      data = await reviewer(data);
+
+      logger.moduleSuccess(
+        currentModule,
+        `Passed : ${data.review.passed}`
+      );
+
+      // ===========================
+      // Validator
+      // ===========================
+
+      currentModule = `Validator (Percubaan ${attempt})`;
+      logger.moduleStart(currentModule);
+
+      data = await validator(data);
+
+      logger.moduleSuccess(
+        currentModule,
+        `Valid : ${data.valid}`
+      );
+
+      if (data.valid) {
+        passedValidation = true;
+      } else {
+        logger.info("Pipeline", `Percubaan ${attempt} gagal pengesahan dengan isu: ${data.validation ? data.validation.join("; ") : "Ralat tidak diketahui"}`);
+      }
+    }
+
+    if (!passedValidation) {
+      logger.info("Pipeline", "Had percubaan maksimum pembetulan kendiri dicapai. Meneruskan dengan jawapan semasa demi UX...");
     }
 
     // ===========================
