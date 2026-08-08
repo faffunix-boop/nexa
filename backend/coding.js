@@ -1,27 +1,16 @@
 const askOpenRouter = require("./openrouter");
-const askGroq = require("./groq");
-const plan = require("./planner");
-const validate = require("./validator");
-const format = require("./formatter");
-const logger = require("./logger");
+const logger = require("./utils/logger");
 
 async function askCoding(question, history = [], onProgress = () => {}) {
-  const t0 = logger.start(question);
-
-  // ---- Planner ----
   onProgress("Merancang pendekatan...");
-  const rancangan = await plan(question);
-  logger.stage("Planner", t0);
+  logger.info("Coding", "Merancang pendekatan...");
 
-  // ---- Coder ----
   onProgress("AI sedang membuat code...");
-  const contextPrompt = rancangan
-    ? `Rancangan:\n${rancangan}\n\nSoalan pengguna: ${question}`
-    : question;
+  logger.info("Coding", "AI sedang membuat code...");
 
   let draft;
   try {
-    draft = await askOpenRouter(contextPrompt, {
+    draft = await askOpenRouter(question, {
       model: "inclusionai/ling-3.0-flash:free",
       history,
       system:
@@ -37,10 +26,9 @@ async function askCoding(question, history = [], onProgress = () => {}) {
   } catch (err) {
     throw err;
   }
-  logger.stage("Coder", t0);
 
-  // ---- Reviewer ----
   onProgress("Code disemak...");
+  logger.info("Coding", "Code disemak...");
   const reviewPrompt = `Semak code berikut dan betulkan jika ada bug.
 
 Soalan:
@@ -51,27 +39,19 @@ ${draft}`;
 
   let reviewed;
   try {
-    reviewed = await askGroq(reviewPrompt, { model: "llama-3.1-8b-instant" });
+    reviewed = await askOpenRouter(reviewPrompt, {
+      model: "qwen/qwen3-235b-a22b-2507:free",
+      system: "Anda adalah senior code reviewer. Balas hanya dengan kod yang dibetulkan tanpa ulasan lain."
+    });
     if (!reviewed?.trim()) reviewed = draft;
   } catch {
     reviewed = draft;
   }
-  logger.stage("Reviewer", t0);
 
-  // ---- Validator ----
   onProgress("Mengesahkan jawapan...");
-  const validation = validate(reviewed);
-  if (!validation.valid) {
-    console.warn("[VALIDATOR] Isu dikesan:", validation.issues.join("; "));
-  }
-  logger.stage("Validator", t0);
+  logger.info("Coding", "Mengesahkan jawapan...");
 
-  // ---- Formatter ----
-  const finalAnswer = format(reviewed);
-  logger.stage("Formatter", t0);
-
-  logger.finish(t0);
-  return finalAnswer;
+  return reviewed;
 }
 
 module.exports = askCoding;

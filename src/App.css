@@ -13,10 +13,11 @@
   --accent-light: rgba(37, 99, 235, 0.06);
   --radius: 12px;
 
-  /* Code blocks dark mode is specified as "background kelabu gelap" */
-  --code-bg: #18181B;
-  --code-text: #F4F4F5;
-  --code-border: #27272A;
+  /* Liquid Glass Code Block Variables */
+  --code-glass-bg: rgba(20, 20, 25, 0.82);
+  --code-glass-border: rgba(0, 0, 0, 0.12);
+  --code-glass-text: #F4F4F5;
+  --code-glass-header-bg: rgba(255, 255, 255, 0.06);
 }
 
 [data-theme="dark"] {
@@ -30,9 +31,11 @@
   --accent-hover: #58A6FF;
   --accent-light: rgba(47, 129, 247, 0.12);
 
-  --code-bg: #0d1117;
-  --code-text: #F0F6FC;
-  --code-border: #30363D;
+  /* Liquid Glass Code Block Variables - Dark Mode */
+  --code-glass-bg: rgba(10, 12, 16, 0.75);
+  --code-glass-border: rgba(255, 255, 255, 0.08);
+  --code-glass-text: #F0F6FC;
+  --code-glass-header-bg: rgba(0, 0, 0, 0.2);
 }
 
 * {
@@ -721,12 +724,14 @@ body {
   border-color: var(--accent);
 }
 
-/* 4. Code Block Style (kelabu gelap, monospace, header, copy button) */
+/* 4. Code Block Style (Liquid Glass design, theme-aware, backdrop filter blur, lowercase) */
 .code-block-wrapper {
   margin: 16px 0;
-  border: 1px solid var(--code-border);
-  border-radius: 8px;
-  background-color: var(--code-bg);
+  border: 1px solid var(--code-glass-border);
+  border-radius: 12px;
+  background-color: var(--code-glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -737,25 +742,26 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 16px;
-  background-color: rgba(255, 255, 255, 0.04);
-  border-bottom: 1px solid var(--code-border);
-  color: var(--code-text);
+  padding: 10px 16px;
+  background-color: var(--code-glass-header-bg);
+  border-bottom: 1px solid var(--code-glass-border);
+  color: var(--code-glass-text);
   font-size: 11px;
   font-family: "JetBrains Mono", monospace;
-  text-transform: uppercase;
+  text-transform: lowercase;
   font-weight: 600;
 }
 
 .code-block-header .copy-btn {
   background: none;
   border: none;
-  color: var(--code-text);
+  color: var(--code-glass-text);
   cursor: pointer;
   font-size: 11px;
   font-weight: 500;
-  padding: 2px 6px;
-  border-radius: 4px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: background-color 120ms ease;
 }
 
 .code-block-header .copy-btn:hover {

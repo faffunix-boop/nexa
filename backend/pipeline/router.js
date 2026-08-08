@@ -1,5 +1,4 @@
 const logger = require("../utils/logger");
-const { getBestModelForTask } = require("../evolution/engine");
 
 async function router(data) {
   logger.info("Router", "Memilih AI...");
@@ -13,9 +12,9 @@ async function router(data) {
 
   sendStatus("Router memilih AI...");
 
-  const modelChoice = getBestModelForTask(task === "code" ? "coding" : "general");
-  const provider = modelChoice.provider;
-  const model = modelChoice.model;
+  // Static model configurations
+  const provider = "openrouter";
+  const model = task === "code" ? "inclusionai/ling-3.0-flash:free" : "qwen/qwen3-235b-a22b-2507:free";
   let system;
 
   if (task === "code") {
@@ -41,10 +40,6 @@ Garis Panduan Respon:
 3. **Kejelasan & Kepadatan**: Jawab dengan jelas, padat, dan terus kepada isi penting. Elakkan ulasan berulang-ulang yang tidak menambah nilai.
 4. **Bahasa**: Gunakan Bahasa Melayu standard atau Bahasa Indonesia mengikut kesesuaian bahasa yang digunakan oleh pengguna secara semula jadi, mengekalkan nada profesional dan mesra.
 `;
-  }
-
-  if (data.evoStrategies && data.evoStrategies.length > 0) {
-    system += `\n\nSISTEM STRATEGI AKTIF (EVOLVED):\n` + data.evoStrategies.map(s => `- ${s}`).join("\n");
   }
 
   logger.success(
