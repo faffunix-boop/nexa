@@ -16,7 +16,7 @@ async function askOpenRouter(message, options = {}) {
   const response = await axios.post(
     "https://openrouter.ai/api/v1/chat/completions",
     {
-      model: model || "qwen/qwen3-coder:free",
+      model: model || "openrouter/free",
       messages,
     },
     {
