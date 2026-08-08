@@ -15,7 +15,7 @@ async function router(data) {
   let provider, model;
   if (task === "code") {
     provider = "openrouter";
-    model = "qwen/qwen3-coder:free";
+    model = "openrouter/free";
   } else {
     provider = "openrouter";
     model = "qwen/qwen3-235b-a22b-2507";
