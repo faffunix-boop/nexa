@@ -1,5 +1,5 @@
 const logger = require("../utils/logger");
-const askGroq = require("../groq");
+const askOpenRouter = require("../openrouter");
 
 async function reviewer(data) {
   logger.info("Reviewer", "Menyemak hasil AI...");
@@ -35,7 +35,9 @@ PANDUAN OUTPUT:
 - JANGAN letak sebarang ulasan peribadi anda di luar seperti "Berikut adalah kod yang dibetulkan:" atau "Draf ini sudah baik." Balas HANYA dengan teks/kod jawapan akhir yang bersih sahaja.
 `;
 
-      const reviewedText = await askGroq(reviewPrompt, { model: "llama-3.1-8b-instant" });
+      const reviewedText = await askOpenRouter(reviewPrompt, {
+        model: "qwen/qwen3-235b-a22b-2507:free"
+      });
       if (reviewedText && reviewedText.trim()) {
         finalResponse = reviewedText.trim();
         logger.info("Reviewer", "Semakan AI-powered reviewer selesai dengan jayanya.");
