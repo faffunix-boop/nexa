@@ -1,11 +1,11 @@
-◇ injected env (0) from .env // tip: ⌘ override existing { override: true }
+◇ injected env (0) from .env // tip: ◈ secrets for agents [www.dotenvx.com]
 =================================
 Nexa Boot
 =================================
 OpenRouter Key : false
 PORT           : 3000
 =================================
-◇ injected env (0) from .env // tip: ⌘ override existing { override: true }
+◇ injected env (0) from .env // tip: ⌘ multiple files { path: ['.env.local', '.env'] }
 Nexa Server berjalan di port 3000
 [Speech Endpoint Error]: AxiosError: Request failed with status code 401
     at settle (/app/backend/node_modules/axios/dist/node/axios.cjs:2216:12)
@@ -268,7 +268,7 @@ Nexa Server berjalan di port 3000
         _idleTimeout: -1,
         _idlePrev: null,
         _idleNext: null,
-        _idleStart: 77411,
+        _idleStart: 164124,
         _onTimeout: null,
         _timerArgs: undefined,
         _repeat: null,
@@ -313,7 +313,7 @@ Nexa Server berjalan di port 3000
     status: 401,
     statusText: 'Unauthorized',
     headers: Object [AxiosHeaders] {
-      date: 'Sun, 09 Aug 2026 03:22:19 GMT',
+      date: 'Sun, 09 Aug 2026 12:04:59 GMT',
       'content-type': 'application/json',
       'transfer-encoding': 'chunked',
       connection: 'keep-alive',
@@ -324,7 +324,7 @@ Nexa Server berjalan di port 3000
       'referrer-policy': 'no-referrer, strict-origin-when-cross-origin',
       'x-content-type-options': 'nosniff',
       server: 'cloudflare',
-      'cf-ray': 'a283a2bdc94e253a-ORD'
+      'cf-ray': 'a286a0594d12e6c0-ORD'
     },
     config: [Object: null prototype] {
       transitional: [Object],

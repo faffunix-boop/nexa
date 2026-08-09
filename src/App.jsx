@@ -89,12 +89,17 @@ function App() {
   const [speechLoadingIdx, setSpeechLoadingIdx] = useState(null);
   const [playingSpeechIdx, setPlayingSpeechIdx] = useState(null);
   const activeAudioRef = useRef(null);
+  const activeAudioUrlRef = useRef(null);
 
   const stopSpeech = () => {
     if (activeAudioRef.current) {
       activeAudioRef.current.pause();
       activeAudioRef.current.currentTime = 0;
       activeAudioRef.current = null;
+    }
+    if (activeAudioUrlRef.current) {
+      URL.revokeObjectURL(activeAudioUrlRef.current);
+      activeAudioUrlRef.current = null;
     }
     setPlayingSpeechIdx(null);
   };
@@ -128,15 +133,24 @@ function App() {
       audio.onended = () => {
         setPlayingSpeechIdx(null);
         activeAudioRef.current = null;
+        URL.revokeObjectURL(audioUrl);
+        if (activeAudioUrlRef.current === audioUrl) {
+          activeAudioUrlRef.current = null;
+        }
       };
 
       audio.onerror = () => {
         setError("Gagal memainkan audio.");
         setPlayingSpeechIdx(null);
         activeAudioRef.current = null;
+        URL.revokeObjectURL(audioUrl);
+        if (activeAudioUrlRef.current === audioUrl) {
+          activeAudioUrlRef.current = null;
+        }
       };
 
       activeAudioRef.current = audio;
+      activeAudioUrlRef.current = audioUrl;
       setPlayingSpeechIdx(msgIdx);
       await audio.play();
 

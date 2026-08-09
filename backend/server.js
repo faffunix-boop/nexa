@@ -135,9 +135,9 @@ app.post("/speech", async (req, res) => {
       return res.status(400).json({ error: "Mesej tak boleh kosong." });
     }
 
-    const cleanedText = cleanTextForSpeech(text);
+    let cleanedText = cleanTextForSpeech(text);
     if (!cleanedText) {
-      return res.status(400).json({ error: "Tiada teks yang boleh diucapkan selepas pembersihan." });
+      cleanedText = "Respon ini hanya mengandungi kod komputer.";
     }
 
     // Call OpenRouter generateSpeech
