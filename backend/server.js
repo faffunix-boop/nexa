@@ -13,8 +13,33 @@ console.log("=================================");
 
 const classifyTask = require("./router");
 const { runPipeline } = require("./pipeline/pipeline");
+const { generateSpeech } = require("./openrouter");
 
 const app = express();
+
+function cleanTextForSpeech(text) {
+  if (!text) return "";
+
+  // 1. Remove code blocks entirely
+  let cleaned = text.replace(/```[\s\S]*?```/g, "");
+
+  // 2. Remove inline code blocks
+  cleaned = cleaned.replace(/`([^`]+)`/g, "$1");
+
+  // 3. Remove Markdown images
+  cleaned = cleaned.replace(/!\[.*?\]\(.*?\)/g, "");
+
+  // 4. Remove Markdown links, but keep the link text
+  cleaned = cleaned.replace(/\[(.*?)\]\(.*?\)/g, "$1");
+
+  // 5. Remove headers, list markers, bold, italic, blockquotes, horizontal rules
+  cleaned = cleaned.replace(/^[#*+-\s]+|[*_~#>`\-]/gm, "");
+
+  // 6. Normalize whitespace/newlines
+  cleaned = cleaned.replace(/\s+/g, " ").trim();
+
+  return cleaned;
+}
 
 app.use(cors());
 app.use(express.json());
@@ -99,6 +124,31 @@ app.post("/chat", async (req, res) => {
     sendError(
       error.message || "Ada masalah pada server."
     );
+  }
+});
+
+app.post("/speech", async (req, res) => {
+  const { text } = req.body;
+
+  try {
+    if (!text || !text.trim()) {
+      return res.status(400).json({ error: "Mesej tak boleh kosong." });
+    }
+
+    const cleanedText = cleanTextForSpeech(text);
+    if (!cleanedText) {
+      return res.status(400).json({ error: "Tiada teks yang boleh diucapkan selepas pembersihan." });
+    }
+
+    // Call OpenRouter generateSpeech
+    const audioStream = await generateSpeech(cleanedText);
+
+    res.setHeader("Content-Type", "audio/mpeg");
+    audioStream.pipe(res);
+
+  } catch (error) {
+    console.error("[Speech Endpoint Error]:", error);
+    res.status(500).json({ error: error.message || "Gagal menghasilkan suara." });
   }
 });
 

@@ -86,6 +86,84 @@ function App() {
   const [likes, setLikes] = useState({});
   const [dislikes, setDislikes] = useState({});
 
+  const [speechLoadingIdx, setSpeechLoadingIdx] = useState(null);
+  const [playingSpeechIdx, setPlayingSpeechIdx] = useState(null);
+  const activeAudioRef = useRef(null);
+
+  const stopSpeech = () => {
+    if (activeAudioRef.current) {
+      activeAudioRef.current.pause();
+      activeAudioRef.current.currentTime = 0;
+      activeAudioRef.current = null;
+    }
+    setPlayingSpeechIdx(null);
+  };
+
+  const handleSpeech = async (text, msgIdx) => {
+    if (playingSpeechIdx === msgIdx) {
+      stopSpeech();
+      return;
+    }
+
+    stopSpeech();
+    setSpeechLoadingIdx(msgIdx);
+    setError(null);
+
+    try {
+      const res = await fetch("/speech", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text })
+      });
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || `Server balas status ${res.status}`);
+      }
+
+      const blob = await res.blob();
+      const audioUrl = URL.createObjectURL(blob);
+      const audio = new Audio(audioUrl);
+
+      audio.onended = () => {
+        setPlayingSpeechIdx(null);
+        activeAudioRef.current = null;
+      };
+
+      audio.onerror = () => {
+        setError("Gagal memainkan audio.");
+        setPlayingSpeechIdx(null);
+        activeAudioRef.current = null;
+      };
+
+      activeAudioRef.current = audio;
+      setPlayingSpeechIdx(msgIdx);
+      await audio.play();
+
+    } catch (err) {
+      console.error(err);
+      setError("Tidak dapat menghasilkan suara.");
+      setTimeout(() => {
+        setError(null);
+      }, 4000);
+    } finally {
+      setSpeechLoadingIdx(null);
+    }
+  };
+
+  const getSpeechButtonText = (msgIdx) => {
+    if (speechLoadingIdx === msgIdx) return "⌛ Memuat...";
+    if (playingSpeechIdx === msgIdx) return "⏹ Stop";
+    return "🔊 Speech";
+  };
+
+  useEffect(() => {
+    stopSpeech();
+    return () => {
+      stopSpeech();
+    };
+  }, [activeId, activeNav]);
+
   useEffect(() => {
     const handleOnline = () => setIsOnline(true);
     const handleOffline = () => setIsOnline(false);
@@ -732,6 +810,13 @@ function App() {
                               onClick={() => handleRegenerate(i)}
                             >
                               Regenerate
+                            </button>
+                            <button
+                              className="card-action-btn"
+                              onClick={() => handleSpeech(c.text, i)}
+                              disabled={speechLoadingIdx === i}
+                            >
+                              {getSpeechButtonText(i)}
                             </button>
                           </div>
                         </div>
